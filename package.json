@@ -12,7 +12,7 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/npm/npm.git"
+    "url": "http://github.com/exposebox/node-thrift2-hbase"
   },
   "author": "orel@exposebox.com",
   "license": "ISC"
