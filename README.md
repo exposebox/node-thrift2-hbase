@@ -1,3 +1,5 @@
+This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but due to that library's abandonment by the author we had to republish it with our contributions.
+
 #Use thrift2 to CRUD for hbase#
 Compiled using Thrift 0.9.3 for HBase version 0.98.4
 <br>
