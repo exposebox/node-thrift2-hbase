@@ -1,5 +1,5 @@
-**This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but **
-**due to that library's abandonment by the author we had to republish it with our contributions.**
+**This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
+due to that library's abandonment by the author we had to republish it with our contributions.**
 <br>
 **The library runs in our production system right now with very good performance. Please open issues! PRs welcome!**
 <br>
