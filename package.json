@@ -1,0 +1,15 @@
+{
+  "name": "node-thrift2-hbase",
+  "version": "0.1.0",
+  "description": "Easy to CRUD for hbase by node-thrift-hbase",
+  "main": "index.js",
+  "dependencies": {
+    "thrift": "0.9.3",
+    "node-int64": "0.3.1",
+    "underscore": "1.7.0",
+    "generic-pool" : "2.x"
+  },
+  "devDependencies": {},
+  "author": "orel@exposebox.com",
+  "license": "ISC"
+}
