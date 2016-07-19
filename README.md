@@ -35,7 +35,7 @@ Compiled using Thrift 0.9.3 for HBase version 0.98.4
 ##1 . create Hbase instance client##
 
 ```javascript
-var HBase = require('node-thrift-hbase');
+var HBase = require('node-thrift2-hbase');
 
 var config = {
     host: ['host1','host2'],
