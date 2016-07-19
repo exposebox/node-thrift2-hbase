@@ -209,7 +209,8 @@ hbaseClient.getRow('users','row1',['info:name','ecf'], 2 ,function(err,data){
 var put = hbaseClient.Put('row1');    //row1 is rowKey
 
 put.add('info','click','100'); // 100 must be string
-put.add('info','click',{value:100,type:'integer'}); // to write as Int64 buffer
+put.add('info','click',{value:100,type:'integer'}); // to write as Int32BE buffer
+put.add('info','click',{value:10.5,type:'float'}); // to write as FloatBE buffer
 
 put.add('info','name','beijing',new Date().getTime());
 
