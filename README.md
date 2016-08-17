@@ -10,8 +10,8 @@ Now with support for table salting!
 ```javascript
 var hbase = require('node-thrift2-hbase')(hbaseConfig);
 hbase.saltMap = {
-    'model:model_output': hbase.saltFunctions.saltByLastKeyCharCode,
-    'stats:user_product_views': hbase.saltFunctions.saltByLastKeyCharCode
+    'myTable1': hbase.saltFunctions.saltByLastKeyCharCode,
+    'myTable2': hbase.saltFunctions.saltByLastKeyCharCode
 };
 ```
 
