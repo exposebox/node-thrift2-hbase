@@ -1,38 +1,27 @@
 **This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
 due to that library's abandonment by the author we had to republish it with our contributions.**
 <br>
-**The library runs in our production Real-TimeBidder right now with very good performance. Please open issues! PRs welcome!**
+**The library runs in our production Real-Time-Bidder right now with very good performance. Please open issues! PRs welcome!**
 <br>
 
 
-#Use thrift2 to CRUD for hbase#
+#Use thrift2 to CRUD for hbase
+Now with support for table salting!
+```javascript
+var hbase = require('node-thrift2-hbase')(hbaseConfig);
+hbase.saltMap = {
+    'model:model_output': hbase.saltFunctions.saltByLastKeyCharCode,
+    'stats:user_product_views': hbase.saltFunctions.saltByLastKeyCharCode
+};
+```
+
+All `get` and `put` operations for tables specified in the `saltMap` will be 
+salted using the given function.
+
 Compiled using Thrift 0.9.3 for HBase version 0.98.4
 <br>
 
-##Get ready for start hadoop hbase thrift2
-
-* start-dfs.sh
-
-* start-hbase.sh
-
-* hbase-daemon.sh start thrift2
-
-####if you run command example display by : jps####
-
-2423 DataNode
-
-2746 ThriftServer
-
-4854 Jps
-
-2349 NameNode
-
-2668 HMaster
-
-2513 SecondaryNameNode
-
-
-##1 . create Hbase instance client##
+##1 . create Hbase instance client
 
 ```javascript
 var HBase = require('node-thrift-hbase');
