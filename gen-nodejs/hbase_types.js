@@ -274,8 +274,13 @@ TColumnValue.prototype.write = function(output) {
     output.writeFieldEnd();
   }
   if (this.value !== null && this.value !== undefined) {
-    output.writeFieldBegin('value', Thrift.Type.STRING, 3);
-    output.writeBinary(this.value);
+    if(this.value&&this.value.buffer && Object.prototype.toString.call(this.value.buffer) == '[object Uint8Array]'){
+      output.writeFieldBegin('value', Thrift.Type.STRING, 3);
+      output.writeBinary(this.value.buffer);
+    }else {
+      output.writeFieldBegin('value', Thrift.Type.STRING, 3);
+      output.writeBinary(this.value);
+    }
     output.writeFieldEnd();
   }
   if (this.timestamp !== null && this.timestamp !== undefined) {

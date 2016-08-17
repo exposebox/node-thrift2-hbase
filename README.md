@@ -24,7 +24,7 @@ Compiled using Thrift 0.9.3 for HBase version 0.98.4
 ##1 . create Hbase instance client
 
 ```javascript
-var HBase = require('node-thrift-hbase');
+var HBase = require('node-thrift2-hbase');
 
 var config = {
     host: ['host1','host2'],
@@ -198,6 +198,8 @@ hbaseClient.getRow('users','row1',['info:name','ecf'], 2 ,function(err,data){
 var put = hbaseClient.Put('row1');    //row1 is rowKey
 
 put.add('info','click','100'); // 100 must be string
+put.add('info','click',{value:100,type:'integer'}); // to write as Int32BE buffer
+put.add('info','click',{value:10.5,type:'float'}); // to write as FloatBE buffer
 
 put.add('info','name','beijing',new Date().getTime());
 
