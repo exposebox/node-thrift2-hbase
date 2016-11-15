@@ -1,6 +1,6 @@
 {
   "name": "node-thrift2-hbase",
-  "version": "0.1.5",
+  "version": "0.1.5.1",
   "description": "Easy to CRUD for hbase by node-thrift-hbase",
   "main": "index.js",
   "dependencies": {
