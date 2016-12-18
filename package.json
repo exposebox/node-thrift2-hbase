@@ -1,11 +1,11 @@
 {
   "name": "node-thrift2-hbase",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Easy to CRUD for hbase by node-thrift-hbase",
   "main": "index.js",
   "dependencies": {
     "caching-map": "^1.0.2",
-    "generic-pool": "3.x",
+    "generic-pool": "2.x",
     "node-int64": "0.3.1",
     "underscore": "1.7.0",
     "thrift": "0.9.3"
