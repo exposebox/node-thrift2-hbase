@@ -37,6 +37,7 @@ scan.add('info','name');   //scan family and qualifier info:name
 scan.add('ecf'); //scan other family ecf
 scan.add('ecf','name');  //scan family and qualifier ecf:name
 
+scan.setFilterString("RowFilter(=,'regexstring:.AAAA')");   //add RowFilter
 
 hbaseClient.scan('users',scan,function(err,data){ //get users table
     if(err){
