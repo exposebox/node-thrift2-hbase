@@ -80,7 +80,7 @@ Service.prototype.getRow = function (table, key, columns, options, callback) {
     var args = arguments;
     args[1] = key;
     var _callback = args[args.length - 1];
-    if (options.cacheQuery || this.cachedTablesSet.has(table)) {
+    if ((options && options.cacheQuery) || this.cachedTablesSet.has(table)) {
         cache.getRow(table, key, columns, options)
             .then(function (cachedGet) {
                 return _callback(null, cachedGet);
