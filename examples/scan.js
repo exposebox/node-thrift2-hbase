@@ -1,56 +1,35 @@
-/**
- * Created by rubinus on 14-10-20.
- */
-var HBase = require('../');
+'use strict';
+
+const _ = require('underscore');
 
 var config = {
-    host: 'master',
-    port: 9090
+    hosts: ["master"],
+    port: "9090",
 };
 
-var hbaseClient = HBase.client(config);
-
-var scan = hbaseClient.Scan();
-
-//get.addFamily('cf');  //add not found column is error
-
-//scan.addFamily('info');  //add all family
-//
-scan.setStartRow('row1');   //start rowKey
-//
-scan.setStopRow('row1p');   //stop rowKey
-//
-//scan.addColumn('info','name');  //add family and qualifier
-//
-//scan.addColumn('ecf','name');   //add other family
-//
-scan.setMaxVersions(2); //set maxversions
-
-scan.setLimit(10); //search how much number rows
+var HBase = require('../src/service')(config);
 
 
-//or Recommend this function add
+var scan = HBase.Scan();
 
-scan.add('info');    //scan all family info
-scan.add('info','name');   //scan family and qualifier info:name
+scan.setStartRow('start');
+scan.setStartRow('end');
+scan.add('sc');    //scan all family info
 
-scan.add('ecf'); //scan other family ecf
-scan.add('ecf','name');  //scan family and qualifier ecf:name
-
-scan.setFilterString("RowFilter(=,'regexstring:.AAAA')");   //add RowFilter
-
-hbaseClient.scan('users',scan,function(err,data){ //get users table
-    if(err){
-        console.log('error:',err);
+HBase.scan('dmp:users_categories', scan, function (err, data) { //get users table
+    if (err) {
+        console.log('error:', err);
         return;
     }
-    console.log(err,data);
 
-    console.log(err,data[0].columnValues);
+    console.log('Total rows scanned:', data.length);
+
+    console.log('First row column values:');
+    console.log('========================');
+    _.each(data[0].columnValues, function (colVal, index) {
+        console.log('Column value #', index);
+        console.log('family:', colVal.family.toString());
+        console.log('qualifier:', colVal.qualifier.toString());
+        console.log('value:', colVal.value.readInt32BE(0, 4));
+    });
 });
-
-
-//already run this command
-
-//thrift --gen js:node /install/hbase-0.98.5/hbase-thrift/src/main/resources/org/apache/hadoop/hbase/thrift2/hbase.thrift
-
