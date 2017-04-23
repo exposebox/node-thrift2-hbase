@@ -1,14 +1,17 @@
 {
   "name": "node-thrift2-hbase",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Easy to CRUD for hbase by node-thrift-hbase",
-  "main": "index.js",
+  "main": "src/service.js",
   "dependencies": {
+    "bluebird": "^3.5.0",
     "caching-map": "^1.0.2",
+    "debug": "^2.6.3",
     "generic-pool": "2.x",
+    "ms": "^1.0.0",
     "node-int64": "0.3.1",
-    "underscore": "1.7.0",
-    "thrift": "0.9.3"
+    "thrift": "0.9.3",
+    "underscore": "1.7.0"
   },
   "devDependencies": {},
   "repository": {
