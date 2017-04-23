@@ -11,7 +11,7 @@ function Scan(options) {
     this.numRows = (options && options.numRows) || 10;
     this.maxVersions = (options && options.maxVersions) || 1;
     this.filterString = (options && options.filterString);
-    this.familyList = [];
+    this.columns = [];
 }
 
 Scan.prototype.setStartRow = function (startRow) {
@@ -38,7 +38,7 @@ Scan.prototype.add = function (family, qualifier, timestamp) {
     if (timestamp) {
         familyMap.timestamp = new Int64(timestamp);
     }
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 
