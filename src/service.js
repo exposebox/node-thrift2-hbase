@@ -71,6 +71,26 @@ Service.prototype.fetchRow = function (table, key, columns, options, callback) {
     });
 };
 
+Service.prototype.Get = Get;
+Service.prototype.get = function(table, get, callback) {
+    var hbasePool = this.clientPool;
+
+    this.clientPool.acquire(function (err, hbaseClient) {
+        if (err)
+            return callback(err);
+
+        hbaseClient.get(table, get, function releaseAndCallback(err, data) {
+            if (err) {
+                //destroy client on error
+                hbasePool.destroy(hbaseClient);
+                return callback(err);
+            }
+            //release client in the end of use.
+            hbasePool.release(hbaseClient);
+            return callback(null, data);
+        });
+    });
+};
 Service.prototype.getRow = function (table, key, columns, options, callback) {
     key = this.salt(table, key);
     var self = this;
@@ -91,6 +111,26 @@ Service.prototype.getRow = function (table, key, columns, options, callback) {
     }
 };
 
+Service.prototype.Put = Put;
+Service.prototype.put = function (table, put, callback) {
+    var hbasePool = this.clientPool;
+
+    this.clientPool.acquire(function (err, hbaseClient) {
+        if (err)
+            return callback(err);
+
+        hbaseClient.put(table, put, function releaseAndCallback(err, data) {
+            if (err) {
+                //destroy client on error
+                hbasePool.destroy(hbaseClient);
+                return callback(err);
+            }
+            //release client in the end of use.
+            hbasePool.release(hbaseClient);
+            return callback(null, data);
+        });
+    });
+};
 Service.prototype.putRow = function (table, key, cf, valuesMap, callback) {
     var hbasePool = this.clientPool;
     key = this.salt(table, key);
@@ -166,6 +206,48 @@ Service.prototype.scan = function (table, scan, callback) {
                 hbasePool.release(hbaseClient);
                 return callback(null, data);
             })
+    });
+};
+
+Service.prototype.Del = Del;
+Service.prototype.del = function(table, del, callback) {
+    var hbasePool = this.clientPool;
+
+    this.clientPool.acquire(function (err, hbaseClient) {
+        if (err)
+            return callback(err);
+
+        hbaseClient.del(table, del, function releaseAndCallback(err, data) {
+            if (err) {
+                //destroy client on error
+                hbasePool.destroy(hbaseClient);
+                return callback(err);
+            }
+            //release client in the end of use.
+            hbasePool.release(hbaseClient);
+            return callback(null, data);
+        });
+    });
+};
+
+Service.prototype.Inc = Inc;
+Service.prototype.inc = function(table, inc, callback) {
+    var hbasePool = this.clientPool;
+
+    this.clientPool.acquire(function (err, hbaseClient) {
+        if (err)
+            return callback(err);
+
+        hbaseClient.inc(table, inc, function releaseAndCallback(err, data) {
+            if (err) {
+                //destroy client on error
+                hbasePool.destroy(hbaseClient);
+                return callback(err);
+            }
+            //release client in the end of use.
+            hbasePool.release(hbaseClient);
+            return callback(null, data);
+        });
     });
 };
 
