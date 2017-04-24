@@ -153,10 +153,6 @@ Client.create = function (options) {
     return new Client(options);
 };
 
-Client.prototype.Get = function (row) {
-    return new Get(row);
-};
-
 Client.prototype.Put = function (row) {
     return new Put(row);
 };
@@ -284,28 +280,8 @@ Client.prototype.scan = function (table, scan, callback) {
 //
 // };
 
-Client.prototype.get = function (table, param, callback) {
-    var row = param.row;
-    if (!row) {
-        callback(null, 'rowKey is null');
-    }
-    var query = {};
-    var maxVersions = param.maxVersions;
-    query.row = row;
-    var columns = [];
-    if (param.familyList && param.familyList.length > 0) {
-        _.each(param.familyList, function (ele, idx) {
-            columns.push(new HBaseTypes.TColumn(ele));
-        });
-        query.columns = columns;
-    }
-
-//    console.log(query);
-
-
-    var tGet = new HBaseTypes.TGet(query);
-    tGet.maxVersions = maxVersions;
-
+Client.prototype.get = function (table, getObj, callback) {
+    var tGet = new HBaseTypes.TGet(getObj);
     this.client.get(table, tGet, function (err, data) {
 
         if (err) {
@@ -315,74 +291,6 @@ Client.prototype.get = function (table, param, callback) {
         }
 
     });
-
-
-};
-
-Client.prototype.getRow = function (table, row, columns, options, callback) {
-    var args = arguments;
-
-    if (args.length <= 0) {
-        console.log('arguments arg short of 3');
-        return;
-    }
-
-    var callback = args[args.length - 1];
-    if (callback && typeof callback != 'function') {
-        console.log('callback is not a function');
-        return;
-    }
-
-    if (args.length < 3) {
-        callback(new Error('arguments arg short of 3'));
-        return;
-    }
-
-    if (args.length === 3) {
-        columns = [];
-    }
-
-    if (args.length > 3) {
-        if (!_.isArray(args[2])) {
-            callback(new Error('family and qualifier must be an Array,example ["info:name"]'));
-            return;
-        }
-    }
-
-    var qcolumns = [];
-    if (columns && columns.length > 0) {
-        var cols = [], temp = {};
-        _.each(columns, function (ele, idx) {
-            if (ele.indexOf(':') != -1) {
-                cols = ele.split(':');
-                temp = {
-                    family: cols[0],
-                    qualifier: cols[1]
-                }
-            } else {
-                temp = {family: ele}
-            }
-            qcolumns.push(new HBaseTypes.TColumn(temp));
-        });
-    }
-
-    // default to 1 for performance, HBase default is 3
-    var maxVersions = (options && options.maxVersions) || 1;
-
-    var tGetArgs = {row: row, columns: qcolumns, maxVersions: maxVersions, timeRange: options && options.timeRange};
-    var tGet = new HBaseTypes.TGet(tGetArgs);
-
-    this.client.get(table, tGet, function (err, data) {
-
-        if (err) {
-            callback(err.message.slice(0, 120));
-        } else {
-            callback(null, data);
-        }
-
-    });
-
-
 };
 
 Client.prototype.put = function (table, param, callback) {
@@ -394,8 +302,8 @@ Client.prototype.put = function (table, param, callback) {
 
     query.row = row;
     var qcolumns = [];
-    if (param.familyList && param.familyList.length > 0) {
-        _.each(param.familyList, function (ele, idx) {
+    if (param.columns && param.columns.length > 0) {
+        _.each(param.columns, function (ele, idx) {
             qcolumns.push(new HBaseTypes.TColumnValue(ele));
         });
         query.columnValues = qcolumns;
@@ -474,27 +382,7 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
 };
 
 Client.prototype.del = function (table, param, callback) {
-    var row = param.row;
-    if (!row) {
-        callback(null, 'rowKey is null');
-    }
-    var query = {};
-
-    query.row = row;
-    var qcolumns = [];
-    if (param.familyList && param.familyList.length > 0) {
-        _.each(param.familyList, function (ele, idx) {
-            qcolumns.push(new HBaseTypes.TColumn(ele));
-        });
-        query.columns = qcolumns;
-    }
-
-//    console.log(query,'--------');
-
-    var that = this;
-
-    var tDelete = new HBaseTypes.TDelete(query);
-
+    var tDelete = new HBaseTypes.TDelete(param);
     this.client.deleteSingle(table, tDelete, function (err) {
 
         if (err) {
@@ -503,8 +391,6 @@ Client.prototype.del = function (table, param, callback) {
             callback(null);
         }
     });
-
-
 };
 
 Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
@@ -579,8 +465,8 @@ Client.prototype.inc = function (table, param, callback) {
 
     query.row = row;
     var qcolumns = [];
-    if (param.familyList && param.familyList.length > 0) {
-        _.each(param.familyList, function (ele, idx) {
+    if (param.columns && param.columns.length > 0) {
+        _.each(param.columns, function (ele, idx) {
             qcolumns.push(new HBaseTypes.TColumnIncrement(ele));
         });
         query.columns = qcolumns;

@@ -5,7 +5,7 @@ function Inc(row) {
         return new Inc(row);
     }
     this.row = row;
-    this.familyList = [];
+    this.columns = [];
 }
 
 Inc.prototype.add = function (family, qualifier, amount) {
@@ -13,7 +13,7 @@ Inc.prototype.add = function (family, qualifier, amount) {
     familyMap.family = family;
     familyMap.qualifier = qualifier;
     familyMap.amount = (amount === 0) ? 0 : (amount || 1);
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 

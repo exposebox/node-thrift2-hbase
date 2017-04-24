@@ -6,7 +6,7 @@ function Del(row) {
         return new Del(row);
     }
     this.row = row;
-    this.familyList = [];
+    this.columns = [];
 }
 
 Del.prototype.add = function (family, qualifier, timestamp) {
@@ -18,14 +18,14 @@ Del.prototype.add = function (family, qualifier, timestamp) {
     if(timestamp){
         familyMap.timestamp = timestamp;
     }
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 
 Del.prototype.addFamily = function (family) {
     var familyMap = {};
     familyMap.family = family;
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 
@@ -33,7 +33,7 @@ Del.prototype.addColumn = function (family, qualifier) {
     var familyMap = {};
     familyMap.family = family;
     familyMap.qualifier = qualifier;
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 
@@ -42,7 +42,7 @@ Del.prototype.addTimestamp = function (family, qualifier, timestamp) {
     familyMap.family = family;
     familyMap.qualifier = qualifier;
     familyMap.timestamp = timestamp;
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 

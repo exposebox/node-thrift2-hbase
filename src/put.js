@@ -7,7 +7,7 @@ function Put(row) {
         return new Put(row);
     }
     this.row = row;
-    this.familyList = [];
+    this.columns = [];
 }
 
 Put.prototype.add = function (family, qualifier, value, timestamp) {
@@ -34,7 +34,7 @@ Put.prototype.add = function (family, qualifier, value, timestamp) {
     if (timestamp) {
         familyMap.timestamp = new Int64(timestamp);
     }
-    this.familyList.push(familyMap);
+    this.columns.push(familyMap);
     return this;
 };
 
