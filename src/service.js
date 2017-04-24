@@ -3,7 +3,7 @@ const _ = require('underscore');
 const Promise = require('bluebird');
 
 const ClientPool = require('./client');
-const Cache = require('./lru-cache');
+const Cache = require('./cache');
 var Get = require('./get');
 var Put = require('./put');
 var Del = require('./del');
@@ -19,9 +19,9 @@ var Service = function (options) {
     let cachedTables = options.cachedTables || [];
     this.cachedTablesSet = new Set(cachedTables);
     this.cache = new Cache(
-        _.bind(function (table, get, callback) {
+        Promise.promisify(_.bind(function (table, get, callback) {
             this.applyActionOnClient('get', table, get, callback)
-        }, this),
+        }, this)),
         options.cacheOptions);
 };
 
