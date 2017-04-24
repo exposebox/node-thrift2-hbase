@@ -5,7 +5,7 @@ const ms = require('ms');
 const Cache = require('caching-map');
 const Promise = require('bluebird');
 
-const debug = require('debug')('node-thrift2-hbase:HBase-Thrift-Client-Cache');
+const debug = require('debug')('node-thrift2-hbase:cache');
 
 class HBaseThriftClientCache extends Cache {
 
@@ -14,19 +14,21 @@ class HBaseThriftClientCache extends Cache {
 
         this.fetch = fetchfunction;
         this.ttl = (options && options.ttl) || ms('5m');
+        this.materialize = function (getObj) {
+            debug('materializing', getObj);
+            return fetchfunction(getObj.table, getObj);
+        }
     }
 
     get(table, getObj, options, callback) {
         getObj.table = table;
+        debug(getObj);
 
         super.get(getObj)
             .then(value => callback(null, value))
             .catch(err => callback(err));
     }
 
-    materialize(getObj) {
-        return this.fetch(getObj.table, getObj);
-    }
 }
 
 Promise.promisifyAll(HBaseThriftClientCache.prototype);
