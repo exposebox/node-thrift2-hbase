@@ -168,29 +168,13 @@ Client.prototype.Inc = function (row) {
 Client.prototype.scan = function (table, scan, callback) {
     var tScan = new HBaseTypes.TScan(scan);
     var that = this;
-    this.client.openScanner(table, tScan, function (err, scannerId) {
-
-        if (err) {
-            callback(err.message.slice(0, 120));
-            return;
-        } else {
-            that.client.getScannerRows(scannerId, scan.numRows, function (serr, data) {
-                if (serr) {
-                    callback(err.message.slice(0, 120));
-                    return;
-                } else {
-                    callback(null, data);
-                }
-            });
-            that.client.closeScanner(scannerId, function (err) {
-                if (err) {
-                    console.log(err);
-                }
-            });
+    this.client.getScannerResults(table, tScan, scan.numRows, function(serr, data){
+        if(serr){
+            callback(serr.message.slice(0, 120));
+        }else{
+            callback(null, data);
         }
-
     });
-
 };
 
 // Client.prototype.scanRow = function (table, startRow, stopRow, columns, numRows, callback) {
