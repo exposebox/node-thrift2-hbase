@@ -25,7 +25,7 @@ class HBaseThriftClientCache extends Cache {
         debug(getObj);
 
         super.get(getObj)
-            .then(value => callback(null, value))
+            .then(value => callback(null, Promise.resolve(value)))
             .catch(err => callback(err));
     }
 
