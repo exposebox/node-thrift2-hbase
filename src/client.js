@@ -177,6 +177,48 @@ Client.prototype.scan = function (table, scan, callback) {
     });
 };
 
+Client.prototype.scanLoopFetch = function(table, scan, callback){
+    var tScan = new HBaseTypes.TScan(scan);
+    var that = this;
+    this.client.openScanner(table, tScan, function(err, scannerId){
+        if(err){
+            that.client.closeScanner(scannerId, function(err){
+                if(err){
+                    console.log(err);
+                }
+            });
+            callback(err.message.slice(0, 120));
+            return;
+        }else{
+            var ret = [];
+            that.client.getScannerRows(scannerId, scan.numRows, function(serr, data){
+                if(serr){
+                    that.client.closeScanner(scannerId, function(err){
+                        if(err){
+                            console.log(err);
+                        }
+                    });
+                    callback(err.message.slice(0, 120));
+                    return;
+                }else{
+                    if(data.length > 0){
+                        Array.prototype.push.apply(ret, data);
+                    }else{
+                        that.client.closeScanner(scannerId, function(err){
+                            if(err){
+                                console.log(err);
+                            }
+                        });
+                        callback(null, ret);
+                    }
+                }
+            });
+        }
+
+    });
+
+};
+
 // Client.prototype.scanRow = function (table, startRow, stopRow, columns, numRows, callback) {
 //     var args = arguments;
 //     var query = {};
