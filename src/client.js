@@ -168,23 +168,49 @@ Client.prototype.Inc = function (row) {
 Client.prototype.scan = function (table, scan, callback) {
     var tScan = new HBaseTypes.TScan(scan);
     var that = this;
-    this.client.openScanner(table, tScan, function (err, scannerId) {
+    this.client.getScannerResults(table, tScan, scan.numRows, function(serr, data){
+        if(serr){
+            callback(serr.message.slice(0, 120));
+        }else{
+            callback(null, data);
+        }
+    });
+};
 
-        if (err) {
-            callback(err.message.slice(0, 120));
-            return;
-        } else {
-            that.client.getScannerRows(scannerId, scan.numRows, function (serr, data) {
-                if (serr) {
-                    callback(err.message.slice(0, 120));
-                    return;
-                } else {
-                    callback(null, data);
+Client.prototype.scanLoopFetch = function(table, scan, callback){
+    var tScan = new HBaseTypes.TScan(scan);
+    var that = this;
+    this.client.openScanner(table, tScan, function(err, scannerId){
+        if(err){
+            that.client.closeScanner(scannerId, function(err){
+                if(err){
+                    console.log(err);
                 }
             });
-            that.client.closeScanner(scannerId, function (err) {
-                if (err) {
-                    console.log(err);
+            callback(err.message.slice(0, 120));
+            return;
+        }else{
+            var ret = [];
+            that.client.getScannerRows(scannerId, scan.numRows, function(serr, data){
+                if(serr){
+                    that.client.closeScanner(scannerId, function(err){
+                        if(err){
+                            console.log(err);
+                        }
+                    });
+                    callback(err.message.slice(0, 120));
+                    return;
+                }else{
+                    if(data.length > 0){
+                        Array.prototype.push.apply(ret, data);
+                    }else{
+                        that.client.closeScanner(scannerId, function(err){
+                            if(err){
+                                console.log(err);
+                            }
+                        });
+                        callback(null, ret);
+                    }
                 }
             });
         }
