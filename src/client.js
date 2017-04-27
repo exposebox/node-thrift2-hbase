@@ -184,7 +184,7 @@ Client.prototype.scanLoopFetchHelp = function(that, ret, scannerId, numRows, cal
                     console.log(err);
                 }
             });
-            callback(err.message.slice(0, 120));
+            callback(serr.message.slice(0, 120));
             return;
         }else{
             if(data.length > 0){
@@ -218,7 +218,6 @@ Client.prototype.scanLoopFetch = function(table, scan, callback){
                 callback(serr, data);
             });
         }
-
     });
 };
 
