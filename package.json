@@ -19,5 +19,10 @@
     "url": "http://github.com/exposebox/node-thrift2-hbase"
   },
   "author": "orel@exposebox.com",
-  "license": "ISC"
+  "license": "ISC",
+  "keywords": [
+    "hbase",
+    "node",
+    "thrift"
+  ]
 }
