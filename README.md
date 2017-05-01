@@ -1,9 +1,16 @@
 **This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
-due to that library's abandonment by the author we had to republish it with our contributions.**
-<br>
-**The library runs in our production Real-Time-Bidder right now with very good performance. Please open issues! PRs welcome!**
-<br>
+due to that library's abandonment by the author we had to republish it with our contributions. 
+The library runs in production on time critical servers (such as real-time-bidders) with very good performance. Please open issues! PRs welcome!**
 
+# Working HBase-Thrift compiler combinations
+The code supplied here used Thrift 0.9.3 to generate code for HBase 0.98.4.
+If you'd like to use this library with different versions, download the desired HBase thrift definition file and compile it using the Thrift compiler of your choice into the project's `gen-nodejs` folder.
+If you are successfully working with different HBase/Thrift compiler versions please tell us and we'll add the info here.
+
+
+- **HBase:** 0.98.4 **Thrift:** 0.9.3
+
+# API 
 
 #Use thrift2 to CRUD for hbase
 Now with support for table salting!
@@ -18,7 +25,6 @@ hbase.saltMap = {
 All `get` and `put` operations for tables specified in the `saltMap` will be 
 salted using the given function.
 
-Compiled using Thrift 0.9.3 for HBase version 0.98.4
 <br>
 
 ##1 . create Hbase instance client
