@@ -44,7 +44,22 @@ get.setTimeRange({
     maxStamp: Date.now()
 });
 
-hbaseClient.get('users', get, function (err, data) { //get users table
+HBase.getAsync('users', get)
+    .then(function (data) {
+        console.log("Data for user with key 'row1':");
+        console.log('==============================');
+        _.each(data[0].columnValues, function (colVal, index) {
+            console.log('Column value #', index);
+            console.log('family:', colVal.family.toString());
+            console.log('qualifier:', colVal.qualifier.toString());
+            console.log('value:', colVal.value.readInt32BE(0, 4));
+        });
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });
+
+HBase.get('users', get, function (err, data) { //get users table
     if (err) {
         console.log('error:', err);
         return;
@@ -60,94 +75,41 @@ hbaseClient.get('users', get, function (err, data) { //get users table
     });
 });
 ```
-
-##getRow(table,rowKey,columns,versions,callback)##
-<br>
-
-###introduce getRow function###
-* hbaseClient.getRow = function (table,rowKey,columns,versions,callback) { 
-
-    * //table is must
-    * //rowKey is must
-    * //columns is not must,the default is get all row value
-    * //versions is not must, the default is 1 ,if have this params,string is auto cost number
-* }
-
-------
-###getRow( table, rowKey, callback)###
-
+A shorthand version is the `getRow` function:
 ```javascript
-hbaseService.getRow('users','row1',function(err,data){
-    //get users table
+HBase.getRow('users', 'row1', ['info:name', 'ecf'], 1,
+    function (err, data) {
+        if (err) {
+            console.log('error:', err);
+            return;
+        }
+        console.log("Data for user with key 'row1':");
+        console.log('==============================');
+        _.each(data[0].columnValues, function (colVal, index) {
+            console.log('Column value #', index);
+            console.log('family:', colVal.family.toString());
+            console.log('qualifier:', colVal.qualifier.toString());
+            console.log('value:', colVal.value.readInt32BE(0, 4));
+        });
+    });
 
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-
-    console.log(err,data);
-
-});
-
+HBase.getRowAsync('users', 'row1', ['info:name', 'ecf'], 1)
+    .then(function (data) {
+        console.log("Data for user with key 'row1':");
+        console.log('==============================');
+        _.each(data[0].columnValues, function (colVal, index) {
+            console.log('Column value #', index);
+            console.log('family:', colVal.family.toString());
+            console.log('qualifier:', colVal.qualifier.toString());
+            console.log('value:', colVal.value.readInt32BE(0, 4));
+        });
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });
 ```
 
-----
-
-###getRow( table, rowKey, columns, callback)###
-
-```javascript
-
-hbaseClient.getRow('users','row1',['info:name','ecf'],function(err,data){ 
-    //get users table
-
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-
-    console.log(err,data);
-
-});
-
-```
-
-----
-
-###getRow( table, rowKey, columns, versions, callback)###
-
-
-```javascript
-
-hbaseClient.getRow('users','row1',['info:name','ecf'], 2 ,function(err,data){ 
-    //get users table
-
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-
-    console.log(err,data);
-
-});
-
-```
-
-* //'users' is table name
-
-* //row1 is rowKey
-
-* //[] is family or family qualifier
-
-* //['info:name','info:tel'] is right. info is family, name and tel is qualifier
-
-* //['info:name','ecf'] is rigth too, info is family , ecf is family
-
-* //function is callback function
-
-* //2 is Maxversion ,default is 1
-
-<br>
-#3 . Use put or putRow function to insert or update data
+## Use put or putRow function to insert or update data
 <br>
 
 ##put( table, put, callback)##
