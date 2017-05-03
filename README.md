@@ -1,6 +1,7 @@
 **This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
-due to that library's abandonment by the author we had to republish it with our contributions. 
-The library runs in production on time critical servers (such as real-time-bidders) with very good performance. Please open issues! PRs welcome!**
+due to that library's abandonment by the author we had to republish it with our contributions.**
+
+A performant, simple, pooled, cached and promisified HBase client library for NodeJS.
 
 # Working HBase-Thrift compiler combinations
 The code supplied here used Thrift 0.9.3 to generate code for HBase 0.98.4.
@@ -12,100 +13,52 @@ If you are successfully working with different HBase/Thrift compiler versions pl
 
 # API 
 
-#Use thrift2 to CRUD for hbase
-Now with support for table salting!
+## Instantiating the HBase client
 ```javascript
-var hbase = require('node-thrift2-hbase')(hbaseConfig);
-hbase.saltMap = {
-    'myTable1': hbase.saltFunctions.saltByLastKeyCharCode,
-    'myTable2': hbase.saltFunctions.saltByLastKeyCharCode
+const config = {
+    hosts: ["master"],
+    port: "9090",
 };
+
+const HBase = require('node-thrift2-hbase')(config);
 ```
 
-All `get` and `put` operations for tables specified in the `saltMap` will be 
-salted using the given function.
-
-<br>
-
-##1 . create Hbase instance client
+## Get
 
 ```javascript
-var HBase = require('node-thrift2-hbase');
+var get = HBase.Get('row1');    //row1 is rowKey
+get.addFamily('cf');
+// get.add('cf'); identical to addFamily
 
-var config = {
-    host: ['host1','host2'],
-    port: 9090,
-    timeout:1000
-};
+get.addColumn('info', 'name');
+// get.add('info', 'name'); identical to addColumn
 
-var hbaseService = HBase(config);
-var hbasePool = hbaseService.clientPool;
-//acquire client to HBase
-hbasePool.acquire(function (err, hbaseClient) {
-    if(err)
-        console.log('error:',err);
-    hbaseClient.getRow('users','row1',['info:name','ecf'],1,function(err,data){ //get users table
-        if(err){
-            console.log('error:',err);
-            //destroy client on error
-            hbasePool.destroy(hbaseClient);
-            return;
-        }
-        //release client in the end of use.
-        hbasePool.release(hbaseClient);
-        console.log(err,data);
-    });
+get.addTimestamp('info', 'name', 1414385447707);
+// get.add('info', 'name', 1414385447707); identical to addTimestamp
 
+get.setMaxVersions(3);
+
+//last ten days as timerange
+get.setTimeRange({
+    minStamp: Date.now() - 10 * 24 * 60 * 60 * 1000,
+    maxStamp: Date.now()
 });
 
-```
-#2 . Use get or getRow function to query data
-
-##get(table,get,callback)
-<br>
-
-```javascript
-var get = hbaseClient.Get('row1');    //row1 is rowKey
-
-//get.addFamily('cf');  //add not found column is error
-
-//get.addFamily('info');
-
-//get.addColumn('info','name');   //this replace addFamily
-
-//get.addTimestamp('info','name',1414385447707);
-
-//get.addColumn('ecf','name');
-
-//get.setMaxVersions(3);  //default 1
-
-//or Recommend this function add
-
-get.add('info');    //get all family info
-
-get.add('info','name');   //get family and qualifier info:name
-
-get.add('info','name',1414385447707); //get info:name and timestamp
-
-get.add('ecf'); //get other family ecf
-
-get.add('ecf','name');  //get family and qualifier ecf:name
-
-get.add('ecf','name',1414385555890); //get info:name and timestamp
-
-
-hbaseClient.get('users',get,function(err,data){ 
-    //get users table
-
-    if(err){
-        console.log('error:',err);
+hbaseClient.get('users', get, function (err, data) { //get users table
+    if (err) {
+        console.log('error:', err);
         return;
     }
-    
-    console.log(err,data);
 
+    console.log("Data for user with key 'row1':");
+    console.log('==============================');
+    _.each(data[0].columnValues, function (colVal, index) {
+        console.log('Column value #', index);
+        console.log('family:', colVal.family.toString());
+        console.log('qualifier:', colVal.qualifier.toString());
+        console.log('value:', colVal.value.readInt32BE(0, 4));
+    });
 });
-
 ```
 
 ##getRow(table,rowKey,columns,versions,callback)##
@@ -523,3 +476,17 @@ hbaseClient.scanRow('users','row1','row1b',['info:name','ecf'],10,function(err,d
 
 <br>
 <br>
+
+# Table Salting
+What is "salting"? The term is taken from the encryption nomenclature, but for our purposes it just means adding a predictable string to a key. The way HBase stores rows means that if the keys are not spread across the string spectrum, then the data will physically be kept in a "not spread" manner - for example, having most rows of a table on very few `Region Server`s. So if your keys are well-spread, so is your data. This allows for faster and more parallel reads/writes en-masse. The only problem is keeping track of which table has its keys salted, and exactly how were the keys salted. We have a solution for that:
+
+```javascript
+var hbase = require('node-thrift2-hbase')(hbaseConfig);
+hbase.saltMap = {
+    'myTable1': hbase.saltFunctions.saltByLastKeyCharCode,
+    'myTable2': hbase.saltFunctions.saltByLastKeyCharCode
+};
+```
+
+All `get` and `put` operations for tables specified in the `saltMap` will be 
+salted using the given function. `hbase.saltFunctions` contains some ready-made salt functions. If you have a salt function you find useful, don't hesitate to make a PR adding it!
