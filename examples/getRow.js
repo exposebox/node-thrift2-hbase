@@ -1,20 +1,39 @@
-/**
- * Created by rubinus on 14-10-20.
- */
-var HBase = require('../');
+'use strict';
 
 var config = {
-    host: 'master',
-    port: 9090
+    hosts: ["master"],
+    port: "9090",
 };
 
-var hbaseClient = HBase.client(config);
+var HBase = require('../src/service')(config);
 
-hbaseClient.getRow('users','row1',['info:name','ecf'],1,function(err,data){ //get users table
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    console.log(err,data);
-});
+HBase.getRow('users', 'row1', ['info:name', 'ecf'], 1,
+    function (err, data) {
+        if (err) {
+            console.log('error:', err);
+            return;
+        }
+        console.log("Data for user with key 'row1':");
+        console.log('==============================');
+        _.each(data[0].columnValues, function (colVal, index) {
+            console.log('Column value #', index);
+            console.log('family:', colVal.family.toString());
+            console.log('qualifier:', colVal.qualifier.toString());
+            console.log('value:', colVal.value.readInt32BE(0, 4));
+        });
+    });
 
+HBase.getRowAsync('users', 'row1', ['info:name', 'ecf'], 1)
+    .then(function (data) {
+        console.log("Data for user with key 'row1':");
+        console.log('==============================');
+        _.each(data[0].columnValues, function (colVal, index) {
+            console.log('Column value #', index);
+            console.log('family:', colVal.family.toString());
+            console.log('qualifier:', colVal.qualifier.toString());
+            console.log('value:', colVal.value.readInt32BE(0, 4));
+        });
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });

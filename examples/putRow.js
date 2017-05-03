@@ -1,20 +1,26 @@
-/**
- * Created by rubinus on 14-10-20.
- */
-var HBase = require('../');
+'use strict';
 
 var config = {
-    host: 'master',
-    port: 9090
+    hosts: ["master"],
+    port: "9090",
 };
 
-var hbaseClient = HBase.client(config);
+var HBase = require('../src/service')(config);
 
-hbaseClient.putRow('users','row1','info:name','phoneqq.com',1414140874929,function(err){ //put users table
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    console.log(err,'put is successfully');
-});
+HBase.putRow('users', 'row1', 'info:name', 'phoneqq.com', 1414140874929,
+    function (err) {
+        if (err) {
+            console.log('error:', err);
+            return;
+        }
+        console.log('Put is successfull.');
+    });
+
+HBase.putRowAsync('users', 'row1', 'info:name', 'phoneqq.com', 1414140874929)
+    .then(function () {
+        console.log('Put is successfull.');
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });
 
