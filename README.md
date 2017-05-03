@@ -1,13 +1,4 @@
-A performant, simple, connection-pooled, cached and promisified HBase client library for NodeJS.
----
-# Working HBase-Thrift compiler combinations
-The code supplied here used Thrift 0.9.3 to generate code for HBase 0.98.4.
-If you'd like to use this library with different versions, download the desired HBase thrift definition file and compile it using the Thrift compiler of your choice into the project's `gen-nodejs` folder.
-If you are successfully working with different HBase/Thrift compiler versions please tell us and we'll add the info here.
-
-
-- **HBase:** 0.98.4 **Thrift:** 0.9.3
-
+A simple, performant, connection-pooled, cached and promisified HBase client library for NodeJS.
 # API 
 
 ## Instantiating the HBase client
@@ -160,12 +151,7 @@ HBase.putRowAsync('users', 'row1', 'info:name', 'phoneqq.com', 1414140874929)
     });
 ```
 
-# Use inc or incRow function to update data
-<br>
-
-##inc( table, inc, callback)##
-<br>
-
+# Inc
 ```javascript
 
 var inc = hbaseClient.Inc('row1');    //row1 is rowKey
@@ -188,30 +174,7 @@ hbaseClient.inc('users',inc,function(err,data){
 
 ```
 
-##incRow( table, rowKey, family:qualifier, callback)##
-<br>
-
-```javascript
-
-hbaseClient.incRow('users','row1','info:counter',function(err,data){ //inc users table
-
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-
-    console.log(err,data);
-    //data is return new counter object
-});
-
-```
-
-<br>
-#5 . Use del or delRow function to delete data
-<br>
-
-##del( table, del, callback)##
-
+# Del
 ```javascript
 
 var del = hbaseClient.Del('row1');    //row1 is rowKey
@@ -242,46 +205,7 @@ hbaseClient.del('users',del,function(err){ //put users table
 
 ```
 
-##delRow( table, rowKey, family:qualifier, callback)##
-<br>
-
-```javascript
-
-hbaseClient.delRow('users','row1','info:name',function(err){ 
-    //put users table
-    
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    
-    console.log(err,'del is successfully');
-});
-
-```
-
-##delRow( table, rowKey, family:qualifier, timestamp, callback)##
-<br>
-
-```javascript
-
-hbaseClient.delRow('users','row1','info:name',1414137991649,function(err){ 
-    //put users table
-    
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    
-    console.log(err,'del is successfully');
-});
-
-```
-
-<br>
-#6 . Use scan or scanRow function to query data
-<br>
-
+# Scan
 ```javascript
 
 var scan = hbaseClient.Scan();
@@ -332,78 +256,6 @@ hbaseClient.scan('users',scan,function(err,data){ //get users table
 
 ```
 
-##scanRow(table,startRow,stopRow,columns,numRows,callback)##
-<br>
-
- * //table is search tableName,must 
- 
- * //startRow is first rowKey,must
- 
- * //stopRow is end rowKey,must
- 
- * //columns is family or family and qualifier,is not must
-   //example : ['info:name','ecf']
-
- * //numRows is count rows, is not must,if none the default is 10.
- 
- * //callback is function
- 
-##scanRow(table,startRow,stopRow,callback)##
-
-```javascript
-
-hbaseClient.scanRow('users','row1','row1b',function(err,data){ 
-    //get users table
-    
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    
-    console.log(err,data);
-});
-
-```
-
-
- ##scanRow(table,startRow,stopRow,colmuns,callback)##
-
-
-```javascript
-
-hbaseClient.scanRow('users','row1','row1b',['info:name','ecf'],function(err,data){ 
-    //get users table
-    
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    
-    console.log(err,data);
-});
-
-```
-
-##scanRow(table,startRow,stopRow,columns,numRows,callback)##
-
-```javascript
-
-hbaseClient.scanRow('users','row1','row1b',['info:name','ecf'],10,function(err,data){ 
-    //get users table
-    
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    
-    console.log(err,data);
-});
-
-```
-
-<br>
-<br>
-
 # Table Salting
 What is "salting"? The term is taken from the encryption nomenclature, but for our purposes it just means adding a predictable string to a key. The way HBase stores rows means that if the keys are not spread across the string spectrum, then the data will physically be kept in a "not spread" manner - for example, having most rows of a table on very few `Region Server`s. So if your keys are well-spread, so is your data. This allows for faster and more parallel reads/writes en-masse. The only problem is keeping track of which table has its keys salted, and exactly how were the keys salted. We have a solution for that:
 
@@ -420,5 +272,15 @@ salted using the given function. `hbase.saltFunctions` contains some ready-made 
 
 
 ---
+#### Working HBase-Thrift compiler combinations
+The code supplied here used Thrift 0.9.3 to generate code for HBase 0.98.4.
+If you'd like to use this library with different versions, download the desired HBase thrift definition file and compile it using the Thrift compiler of your choice into the project's `gen-nodejs` folder.
+If you are successfully working with different HBase/Thrift compiler versions please tell us and we'll add the info here.
+
+
+- **HBase:** 0.98.4 **Thrift:** 0.9.3
+
+---
+
 **This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
 due to that library's abandonment by the author we had to republish it with our contributions.**
