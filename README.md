@@ -1,8 +1,5 @@
-**This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
-due to that library's abandonment by the author we had to republish it with our contributions.**
-
-A performant, simple, pooled, cached and promisified HBase client library for NodeJS.
-
+A performant, simple, connection-pooled, cached and promisified HBase client library for NodeJS.
+---
 # Working HBase-Thrift compiler combinations
 The code supplied here used Thrift 0.9.3 to generate code for HBase 0.98.4.
 If you'd like to use this library with different versions, download the desired HBase thrift definition file and compile it using the Thrift compiler of your choice into the project's `gen-nodejs` folder.
@@ -109,93 +106,61 @@ HBase.getRowAsync('users', 'row1', ['info:name', 'ecf'], 1)
     });
 ```
 
-## Use put or putRow function to insert or update data
-<br>
-
-##put( table, put, callback)##
-<br>
+## Put
 
 ```javascript
-var put = hbaseClient.Put('row1');    //row1 is rowKey
+var put = HBase.Put('row1');
 
-put.add('info','click','100'); // 100 must be string
-put.add('info','click',{value:100,type:'integer'}); // to write as Int32BE buffer
-put.add('info','click',{value:10.5,type:'float'}); // to write as FloatBE buffer
+//        cf   qualifier              value
+put.add('info', 'money', {type: 'float', value: 12.34});
 
-put.add('info','name','beijing',new Date().getTime());
+put.add('info', 'click', {type: 'integer', value: 100});
 
-put.add('ecf','name','zhudaxian');
+//string values don't need a wrapper object
+put.add('ecf', 'name', 'zhudaxian');
 
-hbaseClient.put('users',put,function(err){ //put users table
+//                                   timestamp
+put.add('info', 'name', 'beijing', new Date().getTime());
 
-    if(err){
 
-        console.log('error:',err);
-
-        return;
-
-    }
-
-    console.log(err,'put is successfully');
-
-});
-
-```
-* //info and ecf are family
-
-* //click and name is qualifier
-
-* //beijing is value
-
-* timestamp is now Date() and this value also by coustom
-
-##putRow(table,row,columns,value,callback)##
-
-```javascript
-
-hbaseClient.putRow('users','row1','info:name','phoneqq.com',function(err){ 
-    //put users table
-    
-    if(err){
-        console.log('error:',err);
+HBase.put('users', put, function (err) {
+    if (err) {
+        console.log('error:', err);
         return;
     }
     
-    console.log(err,'put is successfully');
+    console.log('Put is successful.');
 });
 
+HBase.putAsync('users', put)
+    .then(function () {
+        console.log('Put is successful.');
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });
 ```
-
-##putRow(table,row,columns,value,timestamp,callback)##
-
+A shorthand version is the `putRow` function:
 ```javascript
+HBase.putRow('users', 'row1', 'info:name', 'phoneqq.com', 1414140874929,
+    function (err) {
+        if (err) {
+            console.log('error:', err);
+            return;
+        }
+        console.log('Put is successfull.');
+    });
 
-hbaseClient.putRow('users','row1','info:name','phoneqq.com',1414140874929,function(err){ 
-    //put users table
-    
-    if(err){
-        console.log('error:',err);
-        return;
-    }
-    
-    console.log(err,'put is successfully');
-});
-
+HBase.putRowAsync('users', 'row1', 'info:name', 'phoneqq.com', 1414140874929)
+    .then(function () {
+        console.log('Put is successfull.');
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });
 ```
-* //'users' is table name
 
-* //row1 is rowKey
-
-* //'info:name' is right. info is family, name is qualifier
-
-* //function is callback function
-
-* //phoneqq.com is value
- 
-* //1414140874929 is timestamp ,not must,if not so auto generate new Date()
-
-<br>
-#4 . Use inc or incRow function to update data
+# Use inc or incRow function to update data
 <br>
 
 ##inc( table, inc, callback)##
@@ -452,3 +417,8 @@ hbase.saltMap = {
 
 All `get` and `put` operations for tables specified in the `saltMap` will be 
 salted using the given function. `hbase.saltFunctions` contains some ready-made salt functions. If you have a salt function you find useful, don't hesitate to make a PR adding it!
+
+
+---
+**This library was initially based on https://www.npmjs.com/package/node-thrift-hbase but 
+due to that library's abandonment by the author we had to republish it with our contributions.**
