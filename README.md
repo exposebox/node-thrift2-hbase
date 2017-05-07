@@ -1,4 +1,5 @@
 A simple, performant, connection-pooled, cached and promisified HBase client library for NodeJS.
+
 # API 
 
 ## Instantiating the HBase client
