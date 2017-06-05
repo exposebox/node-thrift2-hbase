@@ -139,6 +139,7 @@ Service.prototype.putRow = function (table, key, cf, valuesMap, callback) {
 //cellAmounts = [{cf:f,qualifier:q,amount:1}, ...]
 Service.prototype.incRow = function (table, key, cellAmounts, callback) {
     var hbasePool = this.clientPool;
+    key = this.salt(table, key);
 
     this.clientPool.acquire(function (err, hbaseClient) {
         if (err)
