@@ -87,7 +87,7 @@ Service.prototype.get = function (table, get, options, callback) {
 };
 Service.prototype.getRow = function (table, key, columns, options, callback) {
     debug('getting row', key, 'from table', table, 'with columns', columns);
-    const getObj = new Get(key);
+    const getObj = new Get(key,options);
 
     if (columns && columns.length > 0) {
         _.each(columns, function (ele, idx) {

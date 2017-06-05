@@ -3,9 +3,10 @@
 var Int64 = require('node-int64');
 
 class Get {
-    constructor(row) {
+    constructor(row,options) {
         this.row = row;
-        this.maxVersions = 1;
+        this.setMaxVersions(options && options.maxVersions);
+        this.setTimeRange(options&&options.timeRange);
         this.columns = [];
     }
 
@@ -46,8 +47,9 @@ class Get {
         return this;
     }
 
+    // default to 1 for performance, HBase default is 3
     setMaxVersions(maxVersions) {
-        if (maxVersions <= 0) {
+        if (!maxVersions||maxVersions <= 0) {
             maxVersions = 1;
         }
         this.maxVersions = maxVersions;
@@ -56,6 +58,7 @@ class Get {
 
     setTimeRange(timeRange) {
         this.timeRange = timeRange;
+        return this;
     }
 }
 
