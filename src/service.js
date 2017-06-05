@@ -3,14 +3,14 @@ const _ = require('underscore');
 const Promise = require('bluebird');
 
 const ClientPool = require('./client');
-const Cache = require('./lru-cache');
+const Cache = require('./cache');
 var Get = require('./get');
 var Put = require('./put');
 var Del = require('./del');
 var Inc = require('./inc');
 var Scan = require('./scan');
 
-const debug = require('debug')('Node-Thrift2-HBase');
+const debug = require('debug')('node-thrift2-hbase:service');
 
 var Service = function (options) {
     this.clientPool = ClientPool(options);
@@ -19,9 +19,7 @@ var Service = function (options) {
     let cachedTables = options.cachedTables || [];
     this.cachedTablesSet = new Set(cachedTables);
     this.cache = new Cache(
-        _.bind(function (table, get, callback) {
-            this.applyActionOnClient('get', table, get, callback)
-        }, this),
+        _.bind(this.applyGetOnClientAsync, this),
         options.cacheOptions);
 };
 
@@ -50,8 +48,7 @@ Service.prototype.salt = function (table, key) {
 };
 
 Service.prototype.applyActionOnClient = function (actionName, table, queryObj, callback) {
-    debug('applyActionOnClient: applying action', actionName);
-    debug('applyActionOnClient: query obj', queryObj);
+    debug('applyActionOnClient: applying action', queryObj);
     var hbasePool = this.clientPool;
     this.clientPool.acquire(function (err, hbaseClient) {
         if (err)
@@ -68,15 +65,19 @@ Service.prototype.applyActionOnClient = function (actionName, table, queryObj, c
             return callback(null, data);
         }
 
-        hbaseClient[actionName].apply(table, queryObj, releaseAndCallback);
+        hbaseClient[actionName](table, queryObj, releaseAndCallback);
     });
 };
 
+Service.prototype.applyGetOnClient = function (table, queryObj, callback) {
+    this.applyActionOnClient('get', table, queryObj, callback);
+}
 Service.prototype.Get = Get;
 Service.prototype.get = function (table, get, options, callback) {
     get.row = this.salt(table, get.row);
     var cache = this.cache;
-    debug('getting row', get.row, 'from table', table, 'with columns', columns);
+    debug('getting from table', table);
+    debug(get);
 
     if ((options && options.cacheQuery) || this.cachedTablesSet.has(table)) {
         cache.get(table, get, options, callback)

@@ -1,28 +1,39 @@
-/**
- * Created by rubinus on 14-10-20.
- */
-var HBase = require('../');
+'use strict';
 
 var config = {
-    host: 'master',
-    port: 9090
+    hosts: ["master"],
+    port: "9090",
 };
 
-var hbaseClient = HBase.client(config);
+var HBase = require('../src/service')(config);
 
-var put = hbaseClient.Put('row1');    //row1 is rowKey
+var put = HBase.Put('row1');
 
-put.add('info','click','100'); // 100 must be string
+//        cf   qualifier              value
+put.add('info', 'money', {type: 'float', value: 12.34});
 
-put.add('info','name','beijing',new Date().getTime());
+put.add('info', 'click', {type: 'integer', value: 100});
 
-put.add('ecf','name','zhudaxian');
+//string values don't need a wrapper object
+put.add('ecf', 'name', 'zhudaxian');
 
-hbaseClient.put('users',put,function(err){ //put users table
-    if(err){
-        console.log('error:',err);
+//                                   timestamp
+put.add('info', 'name', 'beijing', new Date().getTime());
+
+
+HBase.put('users', put, function (err) {
+    if (err) {
+        console.log('error:', err);
         return;
     }
-    console.log(err,'put is successfully');
+
+    console.log('Put is successful.');
 });
 
+HBase.putAsync('users', put)
+    .then(function () {
+        console.log('Put is successful.');
+    })
+    .catch(function (err) {
+        console.log('error:', err);
+    });

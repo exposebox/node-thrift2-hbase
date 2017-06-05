@@ -1,6 +1,6 @@
 {
   "name": "node-thrift2-hbase",
-  "version": "0.3.1",
+  "version": "0.3.4-0",
   "description": "Easy to CRUD for hbase by node-thrift-hbase",
   "main": "src/service.js",
   "dependencies": {
@@ -19,5 +19,10 @@
     "url": "http://github.com/exposebox/node-thrift2-hbase"
   },
   "author": "orel@exposebox.com",
-  "license": "ISC"
+  "license": "ISC",
+  "keywords": [
+    "hbase",
+    "node",
+    "thrift"
+  ]
 }
