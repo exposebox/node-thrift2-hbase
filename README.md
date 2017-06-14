@@ -1,6 +1,7 @@
 A simple, performant, connection-pooled, cached and promisified HBase client library for NodeJS.
-# API 
+---
 
+# API 
 ## Instantiating the HBase client
 ```javascript
 const config = {
@@ -279,6 +280,7 @@ If you are successfully working with different HBase/Thrift compiler versions pl
 
 
 - **HBase:** 0.98.4 **Thrift:** 0.9.3
+- **HBase:** 1.1.2 **Thrift:** 0.9.3
 
 ---
 
