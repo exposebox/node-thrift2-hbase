@@ -10,6 +10,7 @@
     "generic-pool": "2.x",
     "ms": "^1.0.0",
     "node-int64": "0.3.1",
+    "should": "^11.2.1",
     "thrift": "0.9.3",
     "underscore": "1.7.0"
   },

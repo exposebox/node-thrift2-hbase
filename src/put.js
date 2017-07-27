@@ -16,16 +16,37 @@ Put.prototype.add = function (family, qualifier, value, timestamp) {
     familyMap.qualifier = qualifier;
 
     if (typeof  value === "object") {
-        if (value.type === "integer") {
-            var buf = new Buffer(4);
-            buf.writeInt32BE(value.value, 0);
-            familyMap.value = buf;
-        } else if (value.type === "float") {
-            var buf = new Buffer(4);
-            buf.writeFloatBE(value.value, 0);
-            familyMap.value = buf;
-        } else {
-            throw new Error('Unsupported value.type for put qualifier ' + family + ':' + qualifier + ' , Value: ' + JSON.stringify(value));
+        switch (value.type) {
+            case "string":
+                familyMap.value = value.value.toString();
+                break;
+            case "integer":
+            case "integer32":
+                var buf = new Buffer(4);
+                buf.writeInt32BE(value.value, 0);
+                familyMap.value = buf;
+                break;
+            case "float":
+                var buf = new Buffer(4);
+                buf.writeFloatBE(value.value, 0);
+                familyMap.value = buf;
+                break;
+            case "number":
+            case "integer48":
+                var buf = new Buffer(6);
+                buf.writeIntBE(value.value, 0, 6);
+                familyMap.value = buf;
+                break;
+            case "UInteger48":
+                var buf = new Buffer(6);
+                buf.writeUIntBE(value.value, 0);
+                familyMap.value = buf;
+                break;
+            case "long":
+            case "int64":
+                familyMap.value = value.value.toBuffer(true);
+            default:
+                throw new Error('Unsupported value.type for put qualifier ' + family + ':' + qualifier + ' , Value: ' + JSON.stringify(value));
         }
     } else {
         familyMap.value = value.toString();
