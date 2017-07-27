@@ -28,7 +28,7 @@ describe('put tests', function () {
         string: buf => buf.toString('utf8', 0, 4),
         integer: buf => buf.readInt32BE(),
         float: buf => buf.readFloatBE(),
-        number: buf => buf.readIntBE(0, 6),
+        number: buf => buf.readIntBE(0, 8),
         long: bug => new Int64(buf)
     };
 

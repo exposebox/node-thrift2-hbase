@@ -33,8 +33,8 @@ Put.prototype.add = function (family, qualifier, value, timestamp) {
                 break;
             case "number":
             case "integer48":
-                var buf = new Buffer(6);
-                buf.writeIntBE(value.value, 0, 6);
+                var buf = new Buffer(8);
+                buf.writeIntBE(value.value, 2, 6);
                 familyMap.value = buf;
                 break;
             case "UInteger48":
