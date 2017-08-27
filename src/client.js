@@ -168,31 +168,31 @@ Client.prototype.Inc = function (row) {
 Client.prototype.scan = function (table, scan, callback) {
     var tScan = new HBaseTypes.TScan(scan);
     var that = this;
-    this.client.getScannerResults(table, tScan, scan.numRows, function(serr, data){
-        if(serr){
+    this.client.getScannerResults(table, tScan, scan.numRows, function (serr, data) {
+        if (serr) {
             callback(serr.message.slice(0, 120));
-        }else{
-            callback(null, data);
+        } else {
+            callback(null, scan.objectsFromData(data));
         }
     });
 };
-Client.prototype.scanLoopFetchHelp = function(that, ret, scannerId, numRows, callback){
-    that.client.getScannerRows(scannerId, numRows, function(serr, data){
-        if(serr){
-            that.client.closeScanner(scannerId, function(err){
-                if(err){
+Client.prototype.scanLoopFetchHelp = function (that, ret, scannerId, numRows, callback) {
+    that.client.getScannerRows(scannerId, numRows, function (serr, data) {
+        if (serr) {
+            that.client.closeScanner(scannerId, function (err) {
+                if (err) {
                     console.log(err);
                 }
             });
             callback(serr.message.slice(0, 120));
             return;
-        }else{
-            if(data.length > 0){
+        } else {
+            if (data.length > 0) {
                 Array.prototype.push.apply(ret, data);
                 that.scanLoopFetchHelp(that, ret, scannerId, numRows, callback);
-            }else{
-                that.client.closeScanner(scannerId, function(err){
-                    if(err){
+            } else {
+                that.client.closeScanner(scannerId, function (err) {
+                    if (err) {
                         console.log(err);
                     }
                 });
@@ -201,112 +201,25 @@ Client.prototype.scanLoopFetchHelp = function(that, ret, scannerId, numRows, cal
         }
     });
 };
-Client.prototype.scanLoopFetch = function(table, scan, callback){
+Client.prototype.scanLoopFetch = function (table, scan, callback) {
     var tScan = new HBaseTypes.TScan(scan);
     var that = this;
-    this.client.openScanner(table, tScan, function(err, scannerId){
-        if(err){
-            that.client.closeScanner(scannerId, function(err){
-                if(err){
+    this.client.openScanner(table, tScan, function (err, scannerId) {
+        if (err) {
+            that.client.closeScanner(scannerId, function (err) {
+                if (err) {
                     console.log(err);
                 }
             });
             callback(err.message.slice(0, 120));
             return;
-        }else{
-            that.scanLoopFetchHelp(that, [], scannerId, scan.numRows, function(serr, data){
-                callback(serr, data);
+        } else {
+            that.scanLoopFetchHelp(that, [], scannerId, scan.numRows, function (serr, data) {
+                callback(serr, scan.objectsFromData(data));
             });
         }
     });
 };
-
-// Client.prototype.scanRow = function (table, startRow, stopRow, columns, numRows, callback) {
-//     var args = arguments;
-//     var query = {};
-//     var numRows = 10;
-//     if (args.length <= 0) {
-//         console.log('arguments arg short of 4');
-//         return;
-//     }
-//     var callback = args[args.length - 1];
-//     if (callback && typeof callback != 'function') {
-//         console.log('callback is not a function');
-//         return;
-//     }
-//     if (args.length < 4) {
-//         callback(new Error('arguments arg short of 4'));
-//         return;
-//     }
-//     if (args.length === 4) {
-//         columns = [];
-//     }
-//     if (args.length > 5) {
-//         if (Object.prototype.toString.call(args[3]) != '[object Array]') {
-//             callback(new Error('family and qualifier must be an Array,example ["info:name"]'));
-//             return;
-//         }
-//     }
-//     if (args.length >= 5) {
-//         numRows = numRows;
-//         if (typeof args[args.length - 2] !== 'number') {
-//             numRows = Number(args[args.length - 2]);
-//         }
-//     }
-//
-//
-//     query.startRow = startRow;
-//     query.stopRow = stopRow;
-//
-//     var qcolumns = [];
-//     if (columns && columns.length > 0) {
-//         var cols = [], temp = {};
-//         _.each(columns, function (ele, idx) {
-//             if (ele.indexOf(':') != -1) {
-//                 cols = ele.split(':');
-//                 temp = {
-//                     family: cols[0],
-//                     qualifier: cols[1]
-//                 }
-//             } else {
-//                 temp = {
-//                     family: ele
-//                 }
-//             }
-//             qcolumns.push(new HBaseTypes.TColumn(temp));
-//         });
-//         query.columns = qcolumns;
-//     }
-//
-// //    console.log(query);
-//
-//     var tScan = new HBaseTypes.TScan(query);
-//     var that = this;
-//     this.client.openScanner(table, tScan, function (err, scannerId) {
-//
-//         if (err) {
-//             callback(err.message.slice(0, 120));
-//             return;
-//         } else {
-//             that.client.getScannerRows(scannerId, numRows, function (serr, data) {
-//                 if (serr) {
-//                     callback(err.message.slice(0, 120));
-//                     return;
-//                 } else {
-//                     callback(null, data);
-//                 }
-//             });
-//             that.client.closeScanner(scannerId, function (err) {
-//                 if (err) {
-//                     console.log(err);
-//                 }
-//             });
-//         }
-//
-//     });
-//
-//
-// };
 
 Client.prototype.get = function (table, getObj, callback) {
     var tGet = new HBaseTypes.TGet(getObj);
@@ -315,7 +228,7 @@ Client.prototype.get = function (table, getObj, callback) {
         if (err) {
             callback(err.message.slice(0, 120));
         } else {
-            callback(null, data);
+            callback(null, getObj.objectFromData(data));
         }
 
     });

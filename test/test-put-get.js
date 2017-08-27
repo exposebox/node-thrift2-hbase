@@ -5,10 +5,24 @@ const assert = require('assert');
 
 const Int64 = require('node-int64');
 const _ = require('underscore');
+const serde = require('../src/serde');
 
 const hbase = require('../src/service')({
-    hosts: ["localhost"],
-    port: "9090"
+    hosts: [
+        "hadoop-eu-m.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-0.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-1.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-2.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-4.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-5.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-6.c.exposeboxdseu31032015.internal",
+        "hadoop-eu-w-7.c.exposeboxdseu31032015.internal"
+    ],
+    port: "9090",
+    minConnections: 2,
+    maxConnections: 20,
+    idleTimeoutMillis: 5 * 60 * 1000,
+    timeout: 500
 });
 
 const testTable = "test:test";
@@ -20,16 +34,8 @@ describe('put tests', function () {
         string: 'abcd',
         integer: 321,
         float: 321.654,
-        number: Math.pow(2, 40) + 1,
+        number: Math.pow(2, 34) + 1,
         // long: new Int64('123456789abcdef0')
-    };
-
-    const bufferRead = {
-        string: buf => buf.toString('utf8', 0, 4),
-        integer: buf => buf.readInt32BE(),
-        float: buf => buf.readFloatBE(),
-        number: buf => buf.readIntBE(0, 8),
-        long: bug => new Int64(buf)
     };
 
     _.each(putValues, function (expectedValue, valueType) {
@@ -37,22 +43,25 @@ describe('put tests', function () {
         it(testTitle, function () {
             console.log(testTitle);
             const rowKey = 'put-' + valueType;
+
             const valuesMap = {};
             valuesMap[valueType] = {type: valueType, value: expectedValue};
+
+            const getObject = new hbase.Get(rowKey);
+            let qualObject = {name: valueType, type: valueType};
+            getObject.add('f', qualObject);
+
             console.log('putting row...');
             return hbase.putRowAsync(testTable, rowKey, 'f', valuesMap)
                 .delay(1500)
                 .then(function () {
                     console.log('reading written row...');
-                    return hbase.getRowAsync(testTable, rowKey, ['f'], {})
+                    return hbase.getAsync(testTable, getObject, {})
                         .then(function (rowData) {
-                            console.log('comparing values...', rowData);
                             should.exist(rowData);
                             rowData.should.not.be.empty;
-                            var valueFromGet = rowData.columnValues[0].value;
-                            console.log(valueFromGet);
-                            console.log('expected:', expectedValue)
-                            console.log('received:', bufferRead[valueType](valueFromGet))
+                            console.log('expected:', expectedValue);
+                            console.log('result object:', rowData);
                             // assert.(bufferRead[valueType](valueFromGet) , expectedValue);
                         });
                 });
