@@ -8,21 +8,8 @@ const _ = require('underscore');
 const serde = require('../src/serde');
 
 const hbase = require('../src/service')({
-    hosts: [
-        "hadoop-eu-m.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-0.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-1.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-2.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-4.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-5.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-6.c.exposeboxdseu31032015.internal",
-        "hadoop-eu-w-7.c.exposeboxdseu31032015.internal"
-    ],
-    port: "9090",
-    minConnections: 2,
-    maxConnections: 20,
-    idleTimeoutMillis: 5 * 60 * 1000,
-    timeout: 500
+    hosts: ["localhost"],
+    port: "9090"
 });
 
 const testTable = "test:test";
