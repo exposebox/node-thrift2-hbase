@@ -1,6 +1,8 @@
 "use strict";
 
 var Int64 = require('node-int64');
+const _ = require('underscore');
+const serde = require('./serde');
 
 class Scan {
     constructor(options) {
@@ -56,6 +58,7 @@ class Scan {
 
         return _.map(hbaseRowsData, rowData => {
             const obj = {};
+            obj.rowkey = rowData.row.toString();
             _.each(rowData.columnValues, colVal => {
                 const family = colVal.family.toString();
                 const qualName = colVal.qualifier.toString();
