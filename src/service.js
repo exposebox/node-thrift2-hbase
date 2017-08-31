@@ -74,6 +74,11 @@ Service.prototype.applyGetOnClient = function (table, queryObj, callback) {
 }
 Service.prototype.Get = Get;
 Service.prototype.get = function (table, get, options, callback) {
+    if (callback == null) {
+        callback = options;
+        options = {};
+    }
+
     get.row = this.salt(table, get.row);
     var cache = this.cache;
     debug('getting from table', table);
@@ -87,7 +92,7 @@ Service.prototype.get = function (table, get, options, callback) {
 };
 Service.prototype.getRow = function (table, key, columns, options, callback) {
     debug('getting row', key, 'from table', table, 'with columns', columns);
-    const getObj = new Get(key,options);
+    const getObj = new Get(key, options);
 
     if (columns && columns.length > 0) {
         _.each(columns, function (ele, idx) {
