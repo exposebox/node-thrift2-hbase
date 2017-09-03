@@ -275,12 +275,14 @@ salted using the given function. `hbase.saltFunctions` contains some ready-made 
 ---
 #### Working HBase-Thrift compiler combinations
 The code supplied here used Thrift 0.9.3 to generate code for HBase 0.98.4.
-If you'd like to use this library with different versions, download the desired HBase thrift definition file and compile it using the Thrift compiler of your choice into the project's `gen-nodejs` folder.
-If you are successfully working with different HBase/Thrift compiler versions please tell us and we'll add the info here.
+If you'd like to use this library with different versions, download the desired HBase Thrift definition file and compile it using the Thrift compiler of your choice into the project's `gen-nodejs` folder.
+If you are successfully working with different HBase/Thrift compiler combination please tell us and we'll add the info here.
 
-
-- **HBase:** 0.98.4 **Thrift:** 0.9.3
-- **HBase:** 1.1.2 **Thrift:** 0.9.3
+HBase     |Thrift Compiler  |
+:--------:|:----------------:
+0.98.4    | 0.9.3           |
+1.1.2     | 0.9.3           |
+1.1.2     | 0.10.0          |
 
 ---
 
