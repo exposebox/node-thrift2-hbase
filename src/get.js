@@ -40,7 +40,7 @@ class Get {
         }
 
         const obj = {};
-        obj.rowkey = rowData.row.toString();
+        obj.rowkey = hbaseRowData.row.toString();
         _.each(hbaseRowData.columnValues, colVal => {
             const family = colVal.family.toString();
             const qualName = colVal.qualifier.toString();
