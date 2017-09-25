@@ -28,8 +28,7 @@ function serialize(valueObj) {
         case "int64":
             return valueObj.value.toBuffer(true);
         default:
-            throw new Error('Unsupported type ' + valueObj.value.type +
-                ' for serialization of valueObj: ' + JSON.stringify(valueObj.value));
+            return valueObj.toString();
     }
 }
 
