@@ -61,20 +61,11 @@ class Get {
     }
 
     addColumn(family, qualifier) {
-        var familyMap = {};
-        familyMap.family = family;
-        familyMap.qualifier = qualifier;
-        this.columns.push(familyMap);
-        return this;
+        return this.add(family, qualifier);
     }
 
     addTimestamp(family, qualifier, timestamp) {
-        var familyMap = {};
-        familyMap.family = family;
-        familyMap.qualifier = qualifier;
-        familyMap.timestamp = new Int64(timestamp);
-        this.columns.push(familyMap);
-        return this;
+        return this.add(family, qualifier, timestamp);
     }
 
     // default to 1 for performance, HBase default is 3

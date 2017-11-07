@@ -6,6 +6,8 @@ function serialize(valueObj) {
     switch (valueObj.type) {
         case "string":
             return valueObj.value.toString();
+        case "json":
+            return JSON.stringify(valueObj.value);
         case "integer":
         case "integer32":
             var buf = new Buffer(4);
@@ -36,6 +38,8 @@ function deserialize(buf, type) {
     switch (type) {
         case "string":
             return buf.toString();
+        case "json":
+            return JSON.parse(buf.toString());
         case "integer":
         case "integer32":
             return buf.readInt32BE();
