@@ -5,12 +5,12 @@
   "main": "src/service.js",
   "dependencies": {
     "bluebird": "^3.5.0",
-    "caching-map": "^1.0.2",
+    "caching-map": "git+https://github.com/exposebox/caching-map.git",
     "debug": "^2.6.3",
     "generic-pool": "2.x",
     "ms": "^1.0.0",
     "node-int64": "0.3.1",
-    "thrift": "0.9.3",
+    "thrift": "0.10.0",
     "underscore": "1.7.0"
   },
   "devDependencies": {
