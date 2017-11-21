@@ -10,16 +10,6 @@ const debug = require('debug')('node-thrift2-hbase:cache');
 
 class HBaseThriftClientCache extends Cache {
 
-    generateKey(keyObj) {
-        return [keyObj.table,
-            keyObj.row,
-            keyObj.maxVersions,
-            keyObj.timeRange,
-            keyObj.columns.map(cell => cell.family + ":" + cell.qualifier).sort().join(","),
-            Object.entries(keyObj.columnTypes).map(keyValue => keyValue.join(":")).sort().join(",")].join(".");
-
-    }
-
     constructor(fetchfunction, options) {
         super((options && options.limit ) || 500000);
 
@@ -28,15 +18,27 @@ class HBaseThriftClientCache extends Cache {
         this.materialize = function (getObj) {
             debug('materializing', getObj);
             return fetchfunction(getObj.table, getObj);
+        };
+
+        this.generateKey = function(keyObj) {
+            return [keyObj.table,
+                keyObj.row,
+                keyObj.maxVersions,
+                keyObj.timeRange,
+                keyObj.columns.map(cell => cell.family + ":" + cell.qualifier).sort().join(","),
+                Object.entries(keyObj.columnTypes).map(keyValue => keyValue.join(":")).sort().join(",")].join(".");
         }
     }
+
 
     get(table, getObj, options, callback) {
         getObj.table = table;
         debug(getObj);
 
         super.get(getObj)
-            .then(value => callback(null, Promise.resolve(value)))
+            .then(value =>{
+                callback(null, Promise.resolve(value));
+            })
             .catch(err => callback(err));
     }
 
