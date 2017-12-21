@@ -7,51 +7,54 @@ const Int64 = require('node-int64');
 const _ = require('underscore');
 const serde = require('../src/serde');
 
-const hbase = require('../src/service')({
-    hosts: ["localhost"],
-    port: "9090"
-});
+const config = require('./config');
+const hbaseServiceCreate = require('../src/service');
 
 const testTable = "test:test";
 
-describe('put tests', function () {
+describe('PUT operation', function () {
     this.timeout(5000);
 
     const putValues = {
         string: 'abcd',
         integer: 321,
-        float: 321.654,
+        float: 1.5,
+        double: 1024.2048,
         number: Math.pow(2, 34) + 1,
         // long: new Int64('123456789abcdef0')
     };
 
+    before(function () {
+        this.hbaseClient = hbaseServiceCreate(config.hbase);
+    });
+
+    after(function () {
+        this.hbaseClient.destroy();
+    });
+
     _.each(putValues, function (expectedValue, valueType) {
-        var testTitle = 'should put a ' + valueType + ' value (' + expectedValue + ')';
-        it(testTitle, function () {
-            console.log(testTitle);
+        const testTitle = `should put a ${valueType} value (${expectedValue})`;
+
+        it(testTitle, async function () {
+            const hbaseClient = this.hbaseClient;
+
             const rowKey = 'put-' + valueType;
 
-            const valuesMap = {};
-            valuesMap[valueType] = {type: valueType, value: expectedValue};
+            const putObject = new hbaseClient.Put(rowKey);
+            putObject.add('f', valueType, {type: valueType, value: expectedValue});
 
-            const getObject = new hbase.Get(rowKey);
-            let qualObject = {name: valueType, type: valueType};
-            getObject.add('f', qualObject);
+            console.log('Putting row...', testTable, putObject);
 
-            console.log('putting row...');
-            return hbase.putRowAsync(testTable, rowKey, 'f', valuesMap)
-                .delay(1500)
-                .then(function () {
-                    console.log('reading written row...');
-                    return hbase.getAsync(testTable, getObject, {})
-                        .then(function (rowData) {
-                            should.exist(rowData);
-                            rowData.should.not.be.empty;
-                            console.log('expected:', expectedValue);
-                            console.log('result object:', rowData);
-                            // assert.(bufferRead[valueType](valueFromGet) , expectedValue);
-                        });
-                });
+            await hbaseClient.putAsync(testTable, putObject);
+
+            const getObject = new hbaseClient.Get(rowKey);
+            getObject.add('f', {name: valueType, type: valueType});
+
+            console.log('Getting row...', getObject);
+
+            const rowData = await hbaseClient.getAsync(testTable, getObject, {});
+
+            should.equal(rowData && rowData.f && rowData.f[valueType], expectedValue);
         });
     });
 });

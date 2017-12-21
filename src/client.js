@@ -1,24 +1,23 @@
 'use strict';
 
-var _ = require('underscore');
-var Int64 = require('node-int64');
+const _ = require('underscore');
+const Int64 = require('node-int64');
 
-var Get = require('./get');
-var Put = require('./put');
-var Del = require('./del');
-var Inc = require('./inc');
-var Scan = require('./scan');
-var thrift = require('thrift');
-var HBase = require('../gen-nodejs/THBaseService');
-var HBaseTypes = require('../gen-nodejs/hbase_types');
-var poolModule = require('generic-pool');
+const Get = require('./get');
+const Put = require('./put');
+const Del = require('./del');
+const Inc = require('./inc');
+const Scan = require('./scan');
+const thrift = require('thrift');
+const HBase = require('../gen-nodejs/THBaseService');
+const HBaseTypes = require('../gen-nodejs/hbase_types');
+const poolModule = require('generic-pool');
 
-var ClientPool = function (options) {
-    var PoolId = (Math.random() * 100000000).toString(36);
+const createClientPool = function (options) {
+    const hostsHistory = {};
 
-    var hostsHistory = {};
     options.hosts.forEach(function (host) {
-        var hostHistory = {
+        const hostHistory = {
             host: host,
             errors: 0,
             lastErrorTime: 0
@@ -26,125 +25,120 @@ var ClientPool = function (options) {
         hostsHistory[host] = hostHistory;
     });
 
-    setInterval(function halflifeErrors() {
+    const halfLifeErrorsInterval = setInterval(function halfLifeErrors() {
         _.forEach(hostsHistory, function (hostHistory) {
             hostHistory.errors = Math.floor(hostHistory.errors / 2);
         });
     }, 60 * 1000);
 
-    function markHostError(host) {
-        var hostHistory = hostsHistory[host];
+    const markHostError = (host) => {
+        const hostHistory = hostsHistory[host];
+
         if (hostHistory) {
             hostHistory.lastErrorTime = Date.now();
             hostHistory.errors += 1;
             hostsHistory[host] = hostHistory;
         }
-    }
+    };
 
+    const pool =
+        poolModule.Pool({
+            name: 'hbase',
+            create: function (callback) {
+                let isCallbackCalled = false;
 
-    var pool = poolModule.Pool({
-        name: 'hbase',
-        create: function (callback) {
+                function callbackWrapper(error, client) {
+                    if (error) {
+                        client._invalid = true;
+                        markHostError(client.host);
+                    }
 
-            var isCallbackCalled = false;
+                    if (isCallbackCalled)
+                        return;
 
-            function callbackWrapper(error, client) {
-                if (error) {
-                    client._invalid = true;
-                    markHostError(client.host);
+                    isCallbackCalled = true;
+                    callback(error, client);
                 }
 
-                if (isCallbackCalled)
-                    return;
 
-                isCallbackCalled = true;
-                callback(error, client);
-            }
+                if (!options.hosts || options.hosts.length < 1) {
+                    return callback(new Error('hosts is empty'));
+                }
 
 
-            if (!options.hosts || options.hosts.length < 1) {
-                return callback(new Error('hosts is empty'));
-            }
+                //filter hostsHistory with connect error.
+                const hostsToSelect = _.values(hostsHistory).filter(function (hostHistory) {
+                    return !hostHistory.errors ||
+                        ((Date.now() - hostHistory.lastErrorTime) > Math.pow(2, hostHistory.errors));
+                });
+
+                if (hostsToSelect.length < 1)
+                    return callback(new Error('All host appear to be down'));
+
+                //select one host from list randomly
+                const host = hostsToSelect[Math.floor(Math.random() *
+                    hostsToSelect.length)].host;
+
+                const clientOption = {
+                    port: options.port,
+                    host: host,
+                    timeout: options.timeout
+                };
+                const client = new Client(clientOption);
 
 
-            //filter hostsHistory with connect error.
-            var hostsToSelect = _.values(hostsHistory).filter(function (hostHistory) {
-                return !hostHistory.errors ||
-                    ((Date.now() - hostHistory.lastErrorTime) > Math.pow(2, hostHistory.errors));
-            });
+                client.connection.on('connect', function () {
+                    client.client = thrift.createClient(HBase, client.connection);
+                    callbackWrapper(null, client);
+                });
 
-            if (hostsToSelect.length < 1)
-                return callback(new Error('All host appear to be down'));
+                //todo: 1. Need to retry with different host. 2. Add cool time for host with errors.
+                client.connection.on('error', function (err) {
+                    console.log('Thrift connection error', err, client.host);
+                    callbackWrapper(err, client);
+                });
 
-            //select one host from list randomly
-            var host = hostsToSelect[Math.floor(Math.random() *
-                hostsToSelect.length)].host;
+                client.connection.on('close', function () {
+                    console.log('Thrift close connection error', client.host);
+                    callbackWrapper(new Error('Thrift close connection'), client);
+                });
 
-            var clientOption = {
-                port: options.port,
-                host: host,
-                timeout: options.timeout
-            };
-            var client = new Client(clientOption);
+                client.connection.on('timeout', function () {
+                    console.log('Thrift timeout connection error', client.host);
+                    callbackWrapper(new Error('Thrift timeout connection'), client);
+                });
 
+            },
+            validate: function (client) {
+                return !client._invalid;
+            },
+            destroy: function (client) {
+                client.connection.end();
+                //try to disconnect from child process gracefully
+                client.child && client.child.disconnect();
+            },
+            min: options.minConnections || 0,
+            max: options.maxConnections || 10,
+            idleTimeoutMillis: 5000
+        });
 
-            client.connection.on('connect', function () {
-                client.client = thrift.createClient(HBase, client.connection);
-                callbackWrapper(null, client);
-            });
+    pool.drain = _.wrap(pool.drain, wrapped => {
+        clearInterval(halfLifeErrorsInterval);
 
-            //todo: 1. Need to retry with different host. 2. Add cool time for host with errors.
-            client.connection.on('error', function (err) {
-                console.log('Thrift connection error', err, client.host);
-                callbackWrapper(err, client);
-            });
-
-            client.connection.on('close', function () {
-                console.log('Thrift close connection error', client.host);
-                callbackWrapper(new Error('Thrift close connection'), client);
-            });
-
-            client.connection.on('timeout', function () {
-                console.log('Thrift timeout connection error', client.host);
-                callbackWrapper(new Error('Thrift timeout connection'), client);
-            });
-
-        },
-        validate: function (client) {
-            return !client._invalid;
-        },
-        destroy: function (client) {
-            client.connection.end();
-            //try to disconnect from child process gracefully
-            client.child && client.child.disconnect();
-            ////kill child if disconnect didn't work
-            //var killTimeout = setTimeout(function(){
-            //    client.child.kill();
-            //},5000);
-            //
-            ////cancel kill timeout on disconnect
-            //client.child.on('disconnect',function(){
-            //    clearTimeout(killTimeout);
-            //});
-
-        },
-        min: options.minConnections || 0,
-        max: options.maxConnections || 10,
-        idleTimeoutMillis: options.idleTimeoutMillis || 3600000
+        wrapped.call(pool);
     });
 
     return pool;
 };
 
-
-var Client = function (options) {
+const Client = function (options) {
     if (!options.host || !options.port) {
         throw new Error('host or port is none');
     }
     this.host = options.host || 'master';
     this.port = options.port || '9090';
 
-    var connection = thrift.createConnection(this.host, this.port, {connect_timeout: options.timeout || 0});
+    const connection = thrift.createConnection(this.host, this.port, {connect_timeout: options.timeout || 0});
     connection.connection.setKeepAlive(true);
     this.connection = connection;
 };
@@ -166,8 +160,8 @@ Client.prototype.Inc = function (row) {
 };
 
 Client.prototype.scan = function (table, scan, callback) {
-    var tScan = new HBaseTypes.TScan(scan);
-    var that = this;
+    const tScan = new HBaseTypes.TScan(scan);
+    const that = this;
     this.client.getScannerResults(table, tScan, scan.numRows, function (serr, data) {
         if (serr) {
             callback(serr.message.slice(0, 120));
@@ -202,8 +196,8 @@ Client.prototype.scanLoopFetchHelp = function (that, ret, scannerId, numRows, ca
     });
 };
 Client.prototype.scanLoopFetch = function (table, scan, callback) {
-    var tScan = new HBaseTypes.TScan(scan);
-    var that = this;
+    const tScan = new HBaseTypes.TScan(scan);
+    const that = this;
     this.client.openScanner(table, tScan, function (err, scannerId) {
         if (err) {
             that.client.closeScanner(scannerId, function (err) {
@@ -222,7 +216,7 @@ Client.prototype.scanLoopFetch = function (table, scan, callback) {
 };
 
 Client.prototype.get = function (table, getObj, callback) {
-    var tGet = new HBaseTypes.TGet(getObj);
+    const tGet = new HBaseTypes.TGet(getObj);
     this.client.get(table, tGet, function (err, data) {
 
         if (err) {
@@ -235,14 +229,14 @@ Client.prototype.get = function (table, getObj, callback) {
 };
 
 Client.prototype.put = function (table, param, callback) {
-    var row = param.row;
+    const row = param.row;
     if (!row) {
         callback(null, 'rowKey is null');
     }
-    var query = {};
+    const query = {};
 
     query.row = row;
-    var qcolumns = [];
+    const qcolumns = [];
     if (param.columns && param.columns.length > 0) {
         _.each(param.columns, function (ele, idx) {
             qcolumns.push(new HBaseTypes.TColumnValue(ele));
@@ -252,7 +246,7 @@ Client.prototype.put = function (table, param, callback) {
 
 //    console.log(query,'--------');
 
-    var tPut = new HBaseTypes.TPut(query);
+    const tPut = new HBaseTypes.TPut(query);
 
     this.client.put(table, tPut, function (err) {
 
@@ -265,14 +259,14 @@ Client.prototype.put = function (table, param, callback) {
 };
 
 Client.prototype.putRow = function (table, row, columns, value, timestamp, callback) {
-    var args = arguments;
-    var query = {};
+    const args = arguments;
+    const query = {};
 
     if (args.length <= 0) {
         console.log('arguments arg short of 5');
         return;
     }
-    var callback = args[args.length - 1];
+    callback = args[args.length - 1];
     if (callback && typeof callback != 'function') {
         console.log('callback is not a function');
         return;
@@ -291,9 +285,9 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
 
 
     query.row = row;
-    var qcolumns = [];
+    const qcolumns = [];
     if (columns) {
-        var cols = [], temp = {};
+        let cols = [], temp = {};
         cols = columns.split(':');
         temp = {
             family: cols[0],
@@ -310,7 +304,7 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
 //    console.log(query);
 
 
-    var tPut = new HBaseTypes.TPut(query);
+    const tPut = new HBaseTypes.TPut(query);
 
     this.client.put(table, tPut, function (err) {
 
@@ -323,7 +317,7 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
 };
 
 Client.prototype.del = function (table, param, callback) {
-    var tDelete = new HBaseTypes.TDelete(param);
+    const tDelete = new HBaseTypes.TDelete(param);
     this.client.deleteSingle(table, tDelete, function (err) {
 
         if (err) {
@@ -335,14 +329,14 @@ Client.prototype.del = function (table, param, callback) {
 };
 
 Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
-    var args = arguments;
-    var query = {};
+    const args = arguments;
+    const query = {};
 
     if (args.length <= 0) {
         console.log('arguments arg short of 3');
         return;
     }
-    var callback = args[args.length - 1];
+    callback = args[args.length - 1];
     if (callback && typeof callback != 'function') {
         console.log('callback is not a function');
         return;
@@ -361,9 +355,9 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
 
 
     query.row = row;
-    var qcolumns = [];
+    const qcolumns = [];
     if (args.length >= 4 && columns) {
-        var cols = [], temp = {};
+        let cols = [], temp = {};
         if (columns.indexOf(':') != -1) {
             cols = columns.split(':');
             temp = {
@@ -386,7 +380,7 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
 //    console.log(query);
 
 
-    var tDelete = new HBaseTypes.TDelete(query);
+    const tDelete = new HBaseTypes.TDelete(query);
 
     this.client.deleteSingle(table, tDelete, function (err, data) {
         if (err) {
@@ -398,14 +392,14 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
 };
 
 Client.prototype.inc = function (table, param, callback) {
-    var row = param.row;
+    const row = param.row;
     if (!row) {
         callback(new Error('rowKey is null'));
     }
-    var query = {};
+    const query = {};
 
     query.row = row;
-    var qcolumns = [];
+    const qcolumns = [];
     if (param.columns && param.columns.length > 0) {
         _.each(param.columns, function (ele, idx) {
             qcolumns.push(new HBaseTypes.TColumnIncrement(ele));
@@ -414,7 +408,7 @@ Client.prototype.inc = function (table, param, callback) {
     }
 
 
-    var tIncrement = new HBaseTypes.TIncrement(query);
+    const tIncrement = new HBaseTypes.TIncrement(query);
 
     this.client.increment(table, tIncrement, function (err, data) {
 
@@ -428,14 +422,14 @@ Client.prototype.inc = function (table, param, callback) {
 };
 
 Client.prototype.incRow = function (table, row, columns, callback) {
-    var args = arguments;
-    var query = {};
+    const args = arguments;
+    const query = {};
 
     if (args.length <= 0) {
         console.log('arguments arg short of 3');
         return;
     }
-    var callback = args[args.length - 1];
+    callback = args[args.length - 1];
     if (callback && typeof callback != 'function') {
         console.log('callback is not a function');
         return;
@@ -454,9 +448,9 @@ Client.prototype.incRow = function (table, row, columns, callback) {
 
 
     query.row = row;
-    var qcolumns = [];
+    const qcolumns = [];
     if (columns) {
-        var cols = [], temp = {};
+        let cols = [], temp = {};
         cols = columns.split(':');
         temp = {
             family: cols[0],
@@ -468,7 +462,7 @@ Client.prototype.incRow = function (table, row, columns, callback) {
 
 //    console.log(query);
 
-    var tIncrement = new HBaseTypes.TIncrement(query);
+    const tIncrement = new HBaseTypes.TIncrement(query);
 
     this.client.increment(table, tIncrement, function (err, data) {
         if (err) {
@@ -481,4 +475,4 @@ Client.prototype.incRow = function (table, row, columns, callback) {
 
 };
 
-module.exports = ClientPool;
+module.exports = createClientPool;

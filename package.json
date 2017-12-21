@@ -14,7 +14,8 @@
     "underscore": "1.7.0"
   },
   "devDependencies": {
-    "should": "^11.2.1"
+    "should": "^11.2.1",
+    "mocha": "^4.0.1"
   },
   "repository": {
     "type": "git",

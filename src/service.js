@@ -1,19 +1,21 @@
 'use strict';
+
 const _ = require('underscore');
 const Promise = require('bluebird');
 
-const ClientPool = require('./client');
+const createClientPool = require('./client');
 const Cache = require('./cache');
-var Get = require('./get');
-var Put = require('./put');
-var Del = require('./del');
-var Inc = require('./inc');
-var Scan = require('./scan');
+
+const Get = require('./get');
+const Put = require('./put');
+const Del = require('./del');
+const Inc = require('./inc');
+const Scan = require('./scan');
 
 const debug = require('debug')('node-thrift2-hbase:service');
 
-var Service = function (options) {
-    this.clientPool = ClientPool(options);
+const Service = function (options) {
+    this.clientPool = createClientPool(options);
     this.hosts = options.hosts;
     this.saltMap = options.saltMap || {};
     let cachedTables = options.cachedTables || [];
@@ -27,14 +29,18 @@ Service.create = function (options) {
     return new Service(options);
 };
 
+Service.prototype.destroy = function () {
+    return this.clientPool.drain(() => console.log('DONE!'));
+};
+
 function noop(k) {
     return k;
 }
 
 function saltByLastKeyCharCode(key) {
-    var charCode = key.codePointAt(key.length - 1);
-    var salt = charCode % 10;
-    var salted = salt.toString() + key;
+    const charCode = key.codePointAt(key.length - 1);
+    const salt = charCode % 10;
+    const salted = salt.toString() + key;
     debug('salting key', key, '=>', salted);
     return salted;
 }
@@ -49,7 +55,7 @@ Service.prototype.salt = function (table, key) {
 
 Service.prototype.applyActionOnClient = function (actionName, table, queryObj, callback) {
     debug('applyActionOnClient: applying action', queryObj);
-    var hbasePool = this.clientPool;
+    const hbasePool = this.clientPool;
     this.clientPool.acquire(function (err, hbaseClient) {
         if (err)
             return callback(err);
@@ -80,7 +86,7 @@ Service.prototype.get = function (table, get, options, callback) {
     }
 
     get.row = this.salt(table, get.row);
-    var cache = this.cache;
+    const cache = this.cache;
     debug('getting from table', table);
     debug(get);
 
@@ -115,16 +121,16 @@ Service.prototype.put = function (table, put, callback) {
     this.applyActionOnClient('put', table, put, callback);
 };
 Service.prototype.putRow = function (table, key, cf, valuesMap, callback) {
-    var hbasePool = this.clientPool;
+    const hbasePool = this.clientPool;
     key = this.salt(table, key);
 
     this.clientPool.acquire(function (err, hbaseClient) {
         if (err)
             return callback(err);
 
-        var put = hbaseClient.Put(key);
-        for (var col in valuesMap) {
-            var value = valuesMap[col];
+        const put = hbaseClient.Put(key);
+        for (const col in valuesMap) {
+            const value = valuesMap[col];
             if (value !== undefined && value !== null)
                 put.add(cf, col, value);
         }
@@ -143,16 +149,16 @@ Service.prototype.putRow = function (table, key, cf, valuesMap, callback) {
 
 //cellAmounts = [{cf:f,qualifier:q,amount:1}, ...]
 Service.prototype.incRow = function (table, key, cellAmounts, callback) {
-    var hbasePool = this.clientPool;
+    const hbasePool = this.clientPool;
     key = this.salt(table, key);
 
     this.clientPool.acquire(function (err, hbaseClient) {
         if (err)
             return callback(err);
 
-        var inc = hbaseClient.Inc(key);
-        for (var cellIndx in cellAmounts) {
-            var incCell = cellAmounts[cellIndx];
+        const inc = hbaseClient.Inc(key);
+        for (const cellIndx in cellAmounts) {
+            const incCell = cellAmounts[cellIndx];
             if (incCell.cf && incCell.qualifier)
                 inc.add(incCell.cf, incCell.qualifier, incCell.amount);
             else
