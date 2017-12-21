@@ -8,7 +8,7 @@ const Int64 = require('node-int64');
 const config = require('./config');
 const hbaseServiceCreate = require('../src/service');
 
-const testTable = "test:test";
+const testTable = config.assets.testTableName;
 
 describe('PUT operation', function () {
     this.timeout(10000);

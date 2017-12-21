@@ -161,7 +161,7 @@ Client.prototype.Inc = function (row) {
 
 Client.prototype.scan = function (table, scan, callback) {
     const tScan = new HBaseTypes.TScan(scan);
-    const that = this;
+
     this.client.getScannerResults(table, tScan, scan.numRows, function (serr, data) {
         if (serr) {
             callback(serr.message.slice(0, 120));

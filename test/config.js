@@ -1,6 +1,9 @@
 module.exports = {
+    assets: {
+        testTableName: 'test:test'
+    },
     hbase: {
-        hosts: ["localhost"],
+        hosts: ['localhost'],
         port: 9090,
         minConnections: 0,
         maxConnections: 20,
