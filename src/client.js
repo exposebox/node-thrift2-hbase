@@ -170,50 +170,6 @@ Client.prototype.scan = function (table, scan, callback) {
         }
     });
 };
-Client.prototype.scanLoopFetchHelp = function (that, ret, scannerId, numRows, callback) {
-    that.client.getScannerRows(scannerId, numRows, function (serr, data) {
-        if (serr) {
-            that.client.closeScanner(scannerId, function (err) {
-                if (err) {
-                    console.log(err);
-                }
-            });
-            callback(serr.message.slice(0, 120));
-            return;
-        } else {
-            if (data.length > 0) {
-                Array.prototype.push.apply(ret, data);
-                that.scanLoopFetchHelp(that, ret, scannerId, numRows, callback);
-            } else {
-                that.client.closeScanner(scannerId, function (err) {
-                    if (err) {
-                        console.log(err);
-                    }
-                });
-                callback(null, ret);
-            }
-        }
-    });
-};
-Client.prototype.scanLoopFetch = function (table, scan, callback) {
-    const tScan = new HBaseTypes.TScan(scan);
-    const that = this;
-    this.client.openScanner(table, tScan, function (err, scannerId) {
-        if (err) {
-            that.client.closeScanner(scannerId, function (err) {
-                if (err) {
-                    console.log(err);
-                }
-            });
-            callback(err.message.slice(0, 120));
-            return;
-        } else {
-            that.scanLoopFetchHelp(that, [], scannerId, scan.numRows, function (serr, data) {
-                callback(serr, scan.objectsFromData(data));
-            });
-        }
-    });
-};
 
 Client.prototype.get = function (table, getObj, callback) {
     const tGet = new HBaseTypes.TGet(getObj);

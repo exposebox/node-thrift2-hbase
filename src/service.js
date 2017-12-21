@@ -11,6 +11,7 @@ const Put = require('./put');
 const Del = require('./del');
 const Inc = require('./inc');
 const Scan = require('./scan');
+const ScanStream = require('./scan-stream');
 
 const debug = require('debug')('node-thrift2-hbase:service');
 
@@ -193,5 +194,9 @@ Service.prototype.inc = function (table, inc, callback) {
 };
 
 Promise.promisifyAll(Service.prototype);
+
+Service.prototype.createScanStream = function (table, scan) {
+    return new ScanStream(this.clientPool, table, scan);
+};
 
 module.exports = Service.create;

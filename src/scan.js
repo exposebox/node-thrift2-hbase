@@ -11,7 +11,8 @@ const defaultOptions = {
     maxVersions: 1,
     filterString: undefined,
     columns: [],
-    columnTypes: {}
+    columnTypes: {},
+    chunkSize: undefined
 };
 
 class Scan {
@@ -31,6 +32,24 @@ class Scan {
 
     setLimit(numRows) {
         this.numRows = numRows;
+        return this;
+    };
+
+    setMaxVersions(maxVersions) {
+        if (maxVersions <= 0) {
+            maxVersions = 1;
+        }
+        this.maxVersions = maxVersions;
+        return this;
+    };
+
+    setFilterString(filterString) {
+        this.filterString = filterString;
+        return this;
+    };
+
+    setChunkSize(chunkSize) {
+        this.chunkSize = chunkSize;
         return this;
     };
 
@@ -75,19 +94,6 @@ class Scan {
             return obj;
         });
     }
-
-    setMaxVersions(maxVersions) {
-        if (maxVersions <= 0) {
-            maxVersions = 1;
-        }
-        this.maxVersions = maxVersions;
-        return this;
-    };
-
-    setFilterString(filterString) {
-        this.filterString = filterString;
-        return this;
-    };
 }
 
 module.exports = Scan;

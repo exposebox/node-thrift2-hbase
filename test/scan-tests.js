@@ -47,12 +47,48 @@ describe('SCAN operation', function () {
         should.equal(rows.length, 300);
     });
 
-    it.skip('should get all rows - 500 rows per iteration', async function () {
-        return 1
+    it('should get all rows - 200 rows per iteration', function (done) {
+        const chunkSize = 200;
+
+        createScanStream({
+            numRows: generatedRowsCount,
+            chunkSize: chunkSize
+        })
+            .on('data', rows => {
+                console.log(`Received ${rows && rows.length} rows...`);
+
+                rows.should.not.be.empty();
+                (rows.length).should.be.belowOrEqual(chunkSize);
+            })
+            .on('error', err => done(err))
+            .on('end', () => done(null));
     });
 
-    it.skip('should get range of rows - 500 rows per iteration', async function () {
-        return 1
+    it('should get range of rows - 50 rows per iteration', function (done) {
+        const chunkSize = 50;
+
+        let totalRows = 0;
+
+        createScanStream({
+            startRow: createRowKey(1300),
+            stopRow: createRowKey(1655),
+            numRows: generatedRowsCount * 2,
+            chunkSize: chunkSize
+        })
+            .on('data', rows => {
+                console.log(`Received ${rows && rows.length} rows...`);
+
+                rows.should.not.be.empty();
+                (rows.length).should.be.belowOrEqual(chunkSize);
+
+                totalRows += rows.length;
+            })
+            .on('error', err => done(err))
+            .on('end', () => {
+                should.equal(totalRows, 355);
+
+                done(null);
+            });
     });
 
     let scanRows = async scanOptions => {
@@ -63,6 +99,16 @@ describe('SCAN operation', function () {
         console.log('Scanning rows...', scanObject);
 
         return hbaseClient.scanAsync(testTable, scanObject);
+    };
+
+    let createScanStream = scanOptions => {
+        const hbaseClient = this.ctx.hbaseClient;
+
+        const scanObject = new hbaseClient.Scan(Object.assign({}, testScanOptions, scanOptions));
+
+        console.log('Scanning rows...', scanObject);
+
+        return hbaseClient.createScanStream(testTable, scanObject);
     };
 
     const putTestRows = async () => {
