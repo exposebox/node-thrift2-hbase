@@ -1,3 +1,5 @@
+const Int64 = require('node-int64');
+
 function serialize(valueObj) {
     let buffer;
 
@@ -34,7 +36,7 @@ function serialize(valueObj) {
             return buffer;
         case 'long':
         case 'int64':
-            return valueObj.value.toBuffer(true);
+            return valueObj.value.buffer;
         default:
             return valueObj.toString();
     }
@@ -60,7 +62,7 @@ function deserialize(buffer, type) {
             return buffer.readUIntBE(0);
         case 'long':
         case 'int64':
-            return buffer.toBuffer(true);
+            return new Int64(buffer);
         default:
             return buffer.toString();
     }

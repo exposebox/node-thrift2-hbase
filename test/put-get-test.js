@@ -1,11 +1,9 @@
 'use strict';
 
+const _ = require('underscore');
 const should = require('should');
-const assert = require('assert');
 
 const Int64 = require('node-int64');
-const _ = require('underscore');
-const serde = require('../src/serde');
 
 const config = require('./config');
 const hbaseServiceCreate = require('../src/service');
@@ -13,7 +11,7 @@ const hbaseServiceCreate = require('../src/service');
 const testTable = "test:test";
 
 describe('PUT operation', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     const putValues = {
         string: 'abcd',
@@ -21,7 +19,7 @@ describe('PUT operation', function () {
         float: 1.5,
         double: 1024.2048,
         number: Math.pow(2, 34) + 1,
-        // long: new Int64('123456789abcdef0')
+        long: new Int64('123456789abc')
     };
 
     before(function () {
@@ -32,13 +30,15 @@ describe('PUT operation', function () {
         this.hbaseClient.destroy();
     });
 
+    const now = Date.now();
+
     _.each(putValues, function (expectedValue, valueType) {
-        const testTitle = `should put a ${valueType} value (${expectedValue})`;
+        const testTitle = `should put a ${valueType.toString()} value (${expectedValue})`;
 
         it(testTitle, async function () {
             const hbaseClient = this.hbaseClient;
 
-            const rowKey = 'put-' + valueType;
+            const rowKey = `put.${now}.${valueType}`;
 
             const putObject = new hbaseClient.Put(rowKey);
             putObject.add('f', valueType, {type: valueType, value: expectedValue});
@@ -54,7 +54,13 @@ describe('PUT operation', function () {
 
             const rowData = await hbaseClient.getAsync(testTable, getObject, {});
 
-            should.equal(rowData && rowData.f && rowData.f[valueType], expectedValue);
+            let actualValue = rowData && rowData.f && rowData.f[valueType];
+
+            if (valueType === 'long') {
+                should.equal(actualValue.compare(expectedValue), 0);
+            } else {
+                should.equal(actualValue, expectedValue);
+            }
         });
     });
 });
