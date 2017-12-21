@@ -20,11 +20,9 @@ describe('SCAN operation', function () {
     this.timeout(10000);
 
     before(async function () {
-        const hbaseClient = hbaseServiceCreate(config.hbase);
+        this.hbaseClient = hbaseServiceCreate(config.hbase);
 
-        await putTestRows(hbaseClient, testStartMs);
-
-        this.hbaseClient = hbaseClient;
+        await putTestRows();
     });
 
     after(function () {
@@ -66,27 +64,29 @@ describe('SCAN operation', function () {
 
         return hbaseClient.scanAsync(testTable, scanObject);
     };
+
+    const putTestRows = async () => {
+        const hbaseClient = this.ctx.hbaseClient;
+
+        console.log(`Putting ${generatedRowsCount} rows on table ${testTable}...`);
+
+        await Promise.map(generateRange(1000, 1000 + generatedRowsCount), async generatedIndex => {
+            const rowKey = createRowKey(generatedIndex);
+
+            const putObject = new hbaseClient.Put(rowKey);
+            putObject.add('f', testQualifier, {type: 'string', value: 't'});
+
+            await hbaseClient.putAsync(testTable, putObject);
+        });
+
+        console.log('Put rows completed');
+    };
+
+    const createRowKey = index => `scan.${testStartMs}.${index}`;
+
+    const generateRange = function* (start, end) {
+        for (let i = start; i < end; i++) {
+            yield i;
+        }
+    };
 });
-
-const putTestRows = async function (hbaseClient) {
-    console.log(`Putting ${generatedRowsCount} rows on table ${testTable}...`);
-
-    await Promise.map(generateRange(1000, 1000 + generatedRowsCount), async generatedIndex => {
-        const rowKey = createRowKey(generatedIndex);
-
-        const putObject = new hbaseClient.Put(rowKey);
-        putObject.add('f', testQualifier, {type: 'string', value: 't'});
-
-        await hbaseClient.putAsync(testTable, putObject);
-    });
-
-    console.log('Put rows completed');
-};
-
-const createRowKey = index => `scan.${testStartMs}.${index}`;
-
-const generateRange = function* (start, end) {
-    for (let i = start; i < end; i++) {
-        yield i;
-    }
-};
