@@ -21,25 +21,21 @@ class ScanStream extends Readable {
                     return resolve();
                 }
 
-                hbaseClient = hbaseClient.client;
+                const hbaseThriftClient = hbaseClient.client;
 
-                hbaseClient.openScanner(this.table, this.tScan, (openScannerError, scannerId) => {
+                this.hbaseClient = hbaseClient;
+                this.hbaseThriftClient = hbaseThriftClient;
+
+                hbaseThriftClient.openScanner(this.table, this.tScan, (openScannerError, scannerId) => {
+                    this.scannerId = scannerId;
+
                     if (openScannerError) {
-                        hbaseClient.closeScanner(scannerId, err => {
-                            if (err) {
-                                console.error(err);
-                            }
+                        this.closeScanner(openScannerError, resolve);
 
-                            this.emit('error', openScannerError.message.slice(0, 120));
-
-                            return resolve();
-                        });
-                    } else {
-                        this.hbaseClient = hbaseClient;
-                        this.scannerId = scannerId;
-
-                        return resolve();
+                        return;
                     }
+
+                    return resolve();
                 });
             });
         });
@@ -52,37 +48,46 @@ class ScanStream extends Readable {
             this._readStarted = true;
         }
 
-        const hbaseClient = this.hbaseClient;
-        const scannerId = this.scannerId;
-
-        hbaseClient.getScannerRows(scannerId, this.scan.chunkSize, (serr, data) => {
-            if (serr) {
+        this.hbaseThriftClient
+            .getScannerRows(this.scannerId, this.scan.chunkSize, (scanError, data) => {
                 //  error
-                hbaseClient.closeScanner(scannerId, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                });
+                if (scanError) {
+                    this.closeScanner(scanError);
 
-                this.emit('error', serr.message.slice(0, 120));
-            } else {
-                if (data.length > 0) {
-                    //  incoming data
-                    this.push(this.scan.objectsFromData(data));
-                } else {
-                    //  end of data
-                    hbaseClient.closeScanner(scannerId, err => {
-                        if (err) {
-                            console.error(err);
-                        }
-                    });
+                    return;
+                }
 
-                    this.hbaseClientPool.release(hbaseClient);
+                //  end of data
+                if (data.length === 0) {
+                    this.closeScanner();
 
                     this.push(null);
+
+                    return;
                 }
-            }
-        });
+
+                //  incoming data
+                this.push(this.scan.objectsFromData(data));
+            });
+    }
+
+    closeScanner(closeByError, scannerClosedCallback) {
+        this.hbaseThriftClient
+            .closeScanner(this.scannerId, err => {
+                if (err) {
+                    console.error(err);
+                }
+
+                this.hbaseClientPool.release(this.hbaseClient);
+
+                if (scannerClosedCallback !== undefined) {
+                    scannerClosedCallback();
+                }
+            });
+
+        if (closeByError !== undefined) {
+            this.emit('error', closeByError.message.slice(0, 120));
+        }
     }
 }
 
