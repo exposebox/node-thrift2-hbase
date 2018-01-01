@@ -257,6 +257,33 @@ hbaseClient.scan('users',scan,function(err,data){ //get users table
 
 ```
 
+# Scan Stream
+```javascript
+const tableName = 'test:test_table';
+
+const scanObject = 
+    hbaseClient.Scan({
+        family: 'f',                //  Column family
+        qualifier: 'test',          //  Qualifier
+        startRow: 'test.row.1',     //  Start scan row key (STARTROW)
+        stopRow: 'test.row.100',    //  Stop scan row key (STOPROW)
+        numRows: 50,                //  Max total rows to fetch (LIMIT)
+        chunkSize: 10               //  Max rows to fetch for one batch
+    });
+
+hbaseClient
+    .createScanStream(tableName, scanObject)
+    .on('data', rows => {
+        console.log(`Received ${rows.length} rows...`);
+    })
+    .on('error', err => {
+        errorHandler(err);
+    })
+    .on('end', () => {
+        console.log('scan ended');
+    });
+```
+
 # Table Salting
 What is "salting"? The term is taken from the encryption nomenclature, but for our purposes it just means adding a predictable string to a key. The way HBase stores rows means that if the keys are not spread across the string spectrum, then the data will physically be kept in a "not spread" manner - for example, having most rows of a table on very few `Region Server`s. So if your keys are well-spread, so is your data. This allows for faster and more parallel reads/writes en-masse. The only problem is keeping track of which table has its keys salted, and exactly how were the keys salted. We have a solution for that:
 
