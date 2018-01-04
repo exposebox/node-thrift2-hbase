@@ -6,15 +6,15 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "caching-map": "git+https://github.com/exposebox/caching-map.git",
-    "debug": "^2.6.3",
-    "generic-pool": "2.x",
-    "ms": "^1.0.0",
+    "debug": "^3.1.0",
+    "generic-pool": "^2.5.4",
+    "ms": "^2.1.1",
     "node-int64": "^0.4.0",
-    "thrift": "0.10.0",
-    "underscore": "1.7.0"
+    "thrift": "^0.10.0",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "should": "^11.2.1",
+    "should": "^13.2.0",
     "mocha": "^4.0.1"
   },
   "repository": {

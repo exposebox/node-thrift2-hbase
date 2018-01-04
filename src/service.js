@@ -30,8 +30,8 @@ Service.create = function (options) {
     return new Service(options);
 };
 
-Service.prototype.destroy = function () {
-    return this.clientPool.drain(() => console.log('DONE!'));
+Service.prototype.destroy = function (callback) {
+    return this.clientPool.drain(callback);
 };
 
 function noop(k) {

@@ -13,6 +13,8 @@ const HBase = require('../gen-nodejs/THBaseService');
 const HBaseTypes = require('../gen-nodejs/hbase_types');
 const poolModule = require('generic-pool');
 
+const debug = require('debug')('node-thrift-hbase:client');
+
 const createClientPool = function (options) {
     const hostsHistory = {};
 
@@ -94,17 +96,17 @@ const createClientPool = function (options) {
 
                 //todo: 1. Need to retry with different host. 2. Add cool time for host with errors.
                 client.connection.on('error', function (err) {
-                    console.log('Thrift connection error', err, client.host);
+                    debug('Thrift connection error', err, client.host);
                     callbackWrapper(err, client);
                 });
 
                 client.connection.on('close', function () {
-                    console.log('Thrift close connection error', client.host);
+                    debug('Thrift close connection error', client.host);
                     callbackWrapper(new Error('Thrift close connection'), client);
                 });
 
                 client.connection.on('timeout', function () {
-                    console.log('Thrift timeout connection error', client.host);
+                    debug('Thrift timeout connection error', client.host);
                     callbackWrapper(new Error('Thrift timeout connection'), client);
                 });
 
@@ -200,8 +202,6 @@ Client.prototype.put = function (table, param, callback) {
         query.columnValues = qcolumns;
     }
 
-//    console.log(query,'--------');
-
     const tPut = new HBaseTypes.TPut(query);
 
     this.client.put(table, tPut, function (err) {
@@ -219,21 +219,22 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
     const query = {};
 
     if (args.length <= 0) {
-        console.log('arguments arg short of 5');
-        return;
+        throw new Error('Expected 5 arguments got 0');
     }
+
     callback = args[args.length - 1];
-    if (callback && typeof callback != 'function') {
-        console.log('callback is not a function');
-        return;
+
+    if (callback && typeof callback !== 'function') {
+        throw new Error('callback is not a function');
     }
+
     if (args.length < 5) {
         callback(new Error('arguments arg short of 5'));
         return;
     }
 
     if (args.length >= 5) {
-        if (args[2].indexOf(':') == -1) {
+        if (args[2].indexOf(':') === -1) {
             callback(new Error('family and qualifier must have it,example ["info:name"]'));
             return;
         }
@@ -256,9 +257,6 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
         qcolumns.push(new HBaseTypes.TColumnValue(temp));
         query.columnValues = qcolumns;
     }
-
-//    console.log(query);
-
 
     const tPut = new HBaseTypes.TPut(query);
 
@@ -289,21 +287,22 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
     const query = {};
 
     if (args.length <= 0) {
-        console.log('arguments arg short of 3');
-        return;
+        throw new Error('Expected 3 arguments got 0');
     }
+
     callback = args[args.length - 1];
-    if (callback && typeof callback != 'function') {
-        console.log('callback is not a function');
-        return;
+
+    if (callback && typeof callback !== 'function') {
+        throw new Error('callback is not a function');
     }
+
     if (args.length < 3) {
         callback(new Error('arguments arg short of 3'));
         return;
     }
 
     if (args.length === 5) {
-        if (args[2].indexOf(':') == -1) {
+        if (args[2].indexOf(':') === -1) {
             callback(new Error('family and qualifier must have it,example ["info:name"]'));
             return;
         }
@@ -332,9 +331,6 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
         qcolumns.push(new HBaseTypes.TColumn(temp));
         query.columns = qcolumns;
     }
-
-//    console.log(query);
-
 
     const tDelete = new HBaseTypes.TDelete(query);
 
@@ -382,26 +378,26 @@ Client.prototype.incRow = function (table, row, columns, callback) {
     const query = {};
 
     if (args.length <= 0) {
-        console.log('arguments arg short of 3');
-        return;
+        throw new Error('Expected 3 arguments got 0');
     }
+
     callback = args[args.length - 1];
-    if (callback && typeof callback != 'function') {
-        console.log('callback is not a function');
-        return;
+
+    if (callback && typeof callback !== 'function') {
+        throw new Error('callback is not a function');
     }
+
     if (args.length < 3) {
         callback(new Error('arguments arg short of 3'));
         return;
     }
 
     if (args.length >= 3) {
-        if (args[2].indexOf(':') == -1) {
+        if (args[2].indexOf(':') === -1) {
             callback(new Error('family and qualifier must have it,example ["info:counter"]'));
             return;
         }
     }
-
 
     query.row = row;
     const qcolumns = [];
@@ -416,8 +412,6 @@ Client.prototype.incRow = function (table, row, columns, callback) {
         query.columns = qcolumns;
     }
 
-//    console.log(query);
-
     const tIncrement = new HBaseTypes.TIncrement(query);
 
     this.client.increment(table, tIncrement, function (err, data) {
@@ -427,8 +421,6 @@ Client.prototype.incRow = function (table, row, columns, callback) {
             callback(null, data);
         }
     });
-
-
 };
 
 module.exports = createClientPool;
