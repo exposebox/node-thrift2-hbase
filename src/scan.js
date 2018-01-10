@@ -4,20 +4,22 @@ const _ = require('underscore');
 const serde = require('./serde');
 const Int64 = require('node-int64');
 
-const defaultOptions = {
-    startRow: undefined,
-    stopRow: undefined,
-    numRows: 10,
-    maxVersions: 1,
-    filterString: undefined,
-    columns: [],
-    columnTypes: {},
-    chunkSize: undefined
-};
-
 class Scan {
     constructor(options) {
-        Object.assign(this, defaultOptions, options);
+        Object.assign(this, this.getDefaultOptions(), options);
+    }
+
+    getDefaultOptions() {
+        return {
+            startRow: undefined,
+            stopRow: undefined,
+            numRows: 10,
+            maxVersions: 1,
+            filterString: undefined,
+            columns: [],
+            columnTypes: {},
+            chunkSize: undefined
+        };
     }
 
     setStartRow(startRow) {
