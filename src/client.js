@@ -50,13 +50,13 @@ const createClientPool = function (options) {
                 let isCallbackCalled = false;
 
                 function callbackWrapper(error, client) {
+                    if (isCallbackCalled)
+                        return;
+
                     if (error) {
                         client._invalid = true;
                         markHostError(client.host);
                     }
-
-                    if (isCallbackCalled)
-                        return;
 
                     isCallbackCalled = true;
                     callback(error, client);
@@ -121,7 +121,7 @@ const createClientPool = function (options) {
             },
             min: options.minConnections || 0,
             max: options.maxConnections || 10,
-            idleTimeoutMillis: 5000
+            idleTimeoutMillis: options.idleTimeoutMillis || 5000
         });
 
     pool.drain = _.wrap(pool.drain, wrapped => {
