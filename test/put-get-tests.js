@@ -19,7 +19,7 @@ describe('PUT operation', function () {
         float: 1.5,
         double: 1024.2048,
         number: Math.pow(2, 34) + 1,
-        long: new Int64('123456789abc')
+        int64: new Int64('123456789abc')
     };
 
     before(function () {
@@ -56,7 +56,7 @@ describe('PUT operation', function () {
 
             let actualValue = rowData && rowData.f && rowData.f[valueType];
 
-            if (valueType === 'long') {
+            if (valueType === 'int64') {
                 should.equal(actualValue.compare(expectedValue), 0);
             } else {
                 should.equal(actualValue, expectedValue);
