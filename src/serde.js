@@ -1,70 +1,60 @@
-const Int64 = require('node-int64');
-
 function serialize(valueObj) {
-    let buffer;
-
     if (typeof valueObj != 'object') {
-        return valueObj.toString();
+        return new Buffer(valueObj.toString());
     }
 
     switch (valueObj.type) {
-        case 'string':
-            return valueObj.value.toString();
-        case 'json':
-            return JSON.stringify(valueObj.value);
-        case 'integer':
-        case 'integer32':
-            buffer = new Buffer(4);
-            buffer.writeInt32BE(valueObj.value, 0);
-            return buffer;
-        case 'float':
-            buffer = new Buffer(4);
-            buffer.writeFloatBE(valueObj.value, 0);
-            return buffer;
-        case 'double':
-            buffer = new Buffer(8);
-            buffer.writeDoubleBE(valueObj.value, 0);
-            return buffer;
-        case 'number':
-        case 'integer48':
-            buffer = new Buffer(8);
-            buffer.writeIntBE(valueObj.value, 2, 6);
-            return buffer;
-        case 'UInteger48':
-            buffer = new Buffer(6);
-            buffer.writeUIntBE(valueObj.value, 0);
-            return buffer;
-        case 'long':
-        case 'int64':
-            return valueObj.value.buffer;
+        case "string":
+            return new Buffer(valueObj.value.toString());
+        case "json":
+            return new Buffer(JSON.stringify(valueObj.value));
+        case "integer":
+        case "integer32":
+            var buf = new Buffer(4);
+            buf.writeInt32BE(valueObj.value, 0);
+            return buf;
+        case "float":
+            var buf = new Buffer(4);
+            buf.writeFloatBE(valueObj.value, 0);
+            return buf;
+        case "number":
+        case "integer48":
+            var buf = new Buffer(8);
+            buf.writeIntBE(valueObj.value, 2, 6);
+            return buf;
+        case "UInteger48":
+            var buf = new Buffer(6);
+            buf.writeUIntBE(valueObj.value, 0);
+            return buf;
+        case "long":
+        case "int64":
+            return valueObj.value.toBuffer(true);
         default:
-            return valueObj.toString();
+            return new Buffer(valueObj.toString());
     }
 }
 
-function deserialize(buffer, type) {
+function deserialize(buf, type) {
     switch (type) {
-        case 'string':
-            return buffer.toString();
-        case 'json':
-            return JSON.parse(buffer.toString());
-        case 'integer':
-        case 'integer32':
-            return buffer.readInt32BE();
-        case 'float':
-            return buffer.readFloatBE();
-        case 'double':
-            return buffer.readDoubleBE();
-        case 'number':
-        case 'integer48':
-            return buffer.readIntBE(2, 6);
-        case 'UInteger48':
-            return buffer.readUIntBE(0);
-        case 'long':
-        case 'int64':
-            return new Int64(buffer);
+        case "string":
+            return buf.toString();
+        case "json":
+            return JSON.parse(buf.toString());
+        case "integer":
+        case "integer32":
+            return buf.readInt32BE();
+        case "float":
+            return buf.readFloatBE();
+        case "number":
+        case "integer48":
+            return buf.readIntBE(2, 6);
+        case "UInteger48":
+            return buf.readUIntBE(0);
+        case "long":
+        case "int64":
+            return buf.toBuffer(true);
         default:
-            return buffer.toString();
+            return buf.toString();
     }
 }
 
