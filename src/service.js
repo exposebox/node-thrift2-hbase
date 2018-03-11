@@ -190,6 +190,7 @@ Service.prototype.del = function (table, del, callback) {
 
 Service.prototype.Inc = Inc;
 Service.prototype.inc = function (table, inc, callback) {
+    inc.row = this.salt(table, inc.row);
     this.applyActionOnClient('inc', table, inc, callback);
 };
 
