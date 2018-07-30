@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 
 const createClientPool = require('./client');
 const Cache = require('./cache');
+const serde = require('./serde');
 
 const Get = require('./get');
 const Put = require('./put');
@@ -33,6 +34,8 @@ Service.create = function (options) {
 Service.prototype.destroy = function (callback) {
     return this.clientPool.drain(callback);
 };
+
+Service.prototype.serde = serde;
 
 function noop(k) {
     return k;
@@ -190,7 +193,6 @@ Service.prototype.del = function (table, del, callback) {
 
 Service.prototype.Inc = Inc;
 Service.prototype.inc = function (table, inc, callback) {
-    inc.row = this.salt(table, inc.row);
     this.applyActionOnClient('inc', table, inc, callback);
 };
 
