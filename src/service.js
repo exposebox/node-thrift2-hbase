@@ -122,6 +122,7 @@ Service.prototype.getRow = function (table, key, columns, options, callback) {
 
 Service.prototype.Put = Put;
 Service.prototype.put = function (table, put, callback) {
+    put.row = this.salt(table, put.row);
     this.applyActionOnClient('put', table, put, callback);
 };
 Service.prototype.putRow = function (table, key, cf, valuesMap, callback) {
