@@ -18,7 +18,7 @@ class Scan {
             filterString: undefined,
             columns: [],
             columnTypes: {},
-            chunkSize: undefined
+            chunkSize: 250
         };
     }
 
