@@ -66,6 +66,10 @@ class ScanStream extends Readable {
                     return;
                 }
 
+                // splits cpu blocks, takes less uninterrupted cpu time
+                this.pause();
+                setImmediate(() => this.resume());
+
                 //  incoming data
                 this.push(this.scan.objectsFromData(data));
             });
