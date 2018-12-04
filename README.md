@@ -98,6 +98,38 @@ HBase.getRowAsync('users', 'row1', ['info:name', 'ecf'], 1)
     });
 ```
 
+### Qualifier serialization/deserialization:
+When adding a qualifier via `add` methods to `Get`, `Put` and `Scan` objects you can specify the type of value expected for that qualifier. That means that instead of reading the value of the qualifier's buffer yourself, the library can do it for you. For example:
+```javascript
+var get = HBase.Get('row1');    //row1 is rowKey
+// column family "f", qualifier "q1", value is a float
+get.add('f', {name: 'q1', type: 'float'});
+// column family "f", qualifier "q2", value is a json object
+get.add('f', {name: 'q2', type: 'json'});
+// column family "f", qualifier "q3" type unspecified - default is string
+get.add('f', 'q3');
+
+HBase.get("table", get).then(rowData => console.log(rowData));
+shouldEqual(rowData, {
+    rowkey: "row1", 
+    d:{
+        q1: 123.321
+        q2: {prop:"val"},
+        q3: "123.321"
+    }
+});
+```
+
+The following types are supported:
+`string` (if type is unspecified, defaults to `string`)
+`json` (parses the value as a JSON string)
+`integer` (alias: `integer32`)
+`float`
+`double`
+`number` (alias: `integer48`)
+`UInteger48`
+`int64`
+
 ## Put
 
 ```javascript
