@@ -17,6 +17,7 @@ const debug = require('debug')('node-thrift-hbase:client');
 
 const createClientPool = function (options) {
     const hostsHistory = {};
+    options = JSON.parse(JSON.stringify(options));
 
     options.hosts.forEach(function (host) {
         const hostHistory = {
@@ -81,11 +82,9 @@ const createClientPool = function (options) {
                 const host = hostsToSelect[Math.floor(Math.random() *
                     hostsToSelect.length)].host;
 
-                const clientOption = {
-                    port: options.port,
-                    host: host,
-                    timeout: options.timeout
-                };
+                const clientOption = Object.assign(options, {
+                    host
+                });
                 const client = new Client(clientOption);
 
 
@@ -140,7 +139,36 @@ const Client = function (options) {
     this.host = options.host || 'master';
     this.port = options.port || '9090';
 
-    const connection = thrift.createConnection(this.host, this.port, {connect_timeout: options.timeout || 0});
+    let transport;
+    switch (options.transport) {
+        case 'framed':
+            transport = thrift.TFramedTransport;
+            break;
+        case 'buffered':
+        default:
+            transport = thrift.TBufferedTransport;
+    }
+
+    let protocol;
+    switch (options.protocol) {
+        case 'compact':
+            protocol = thrift.TCompactProtocol;
+            break;
+        case 'json':
+            protocol = thrift.TJSONProtocol;
+            break;
+        case 'binary':
+        default:
+            protocol = thrift.TBinaryProtocol;
+    }
+
+    const thriftConnectionOptions = Object.assign(options, {
+        connect_timeout: options.timeout || 0,
+        transport,
+        protocol
+    });
+
+    const connection = thrift.createConnection(this.host, this.port, thriftConnectionOptions);
     connection.connection.setKeepAlive(true);
     this.connection = connection;
 };
