@@ -19,6 +19,28 @@ const createClientPool = function (options) {
     const hostsHistory = {};
     options = JSON.parse(JSON.stringify(options));
 
+    switch (options.transport) {
+        case 'framed':
+            options.transport = thrift.TFramedTransport;
+            break;
+        case 'buffered':
+        default:
+            options.transport = thrift.TBufferedTransport;
+    }
+
+    switch (options.protocol) {
+        case 'compact':
+            options.protocol = thrift.TCompactProtocol;
+            break;
+        case 'json':
+            options.protocol = thrift.TJSONProtocol;
+            break;
+        case 'binary':
+        default:
+            options.protocol = thrift.TBinaryProtocol;
+    }
+
+
     options.hosts.forEach(function (host) {
         const hostHistory = {
             host: host,
@@ -139,36 +161,9 @@ const Client = function (options) {
     this.host = options.host || 'master';
     this.port = options.port || '9090';
 
-    let transport;
-    switch (options.transport) {
-        case 'framed':
-            transport = thrift.TFramedTransport;
-            break;
-        case 'buffered':
-        default:
-            transport = thrift.TBufferedTransport;
-    }
+    options.connect_timeout = options.timeout || 0;
 
-    let protocol;
-    switch (options.protocol) {
-        case 'compact':
-            protocol = thrift.TCompactProtocol;
-            break;
-        case 'json':
-            protocol = thrift.TJSONProtocol;
-            break;
-        case 'binary':
-        default:
-            protocol = thrift.TBinaryProtocol;
-    }
-
-    const thriftConnectionOptions = Object.assign(options, {
-        connect_timeout: options.timeout || 0,
-        transport,
-        protocol
-    });
-
-    const connection = thrift.createConnection(this.host, this.port, thriftConnectionOptions);
+    const connection = thrift.createConnection(this.host, this.port, options);
     connection.connection.setKeepAlive(true);
     this.connection = connection;
 };
