@@ -75,7 +75,13 @@ Service.prototype.applyActionOnClient = function (actionName, table, queryObj, c
             return callback(null, data);
         }
 
-        hbaseClient[actionName](table, queryObj, releaseAndCallback);
+        try {
+            hbaseClient[actionName](table, queryObj, releaseAndCallback);
+        }catch(err){
+            //release client on exception in creating thrift command
+            hbasePool.release(hbaseClient);
+            callback(err);
+        }
     });
 };
 
