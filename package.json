@@ -4,18 +4,18 @@
   "description": "Easy to CRUD for hbase by node-thrift-hbase",
   "main": "src/service.js",
   "dependencies": {
-    "bluebird": "^3.5.0",
+    "bluebird": "^3.5.3",
     "caching-map": "git+https://github.com/exposebox/caching-map.git",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "generic-pool": "^2.5.4",
     "ms": "^2.1.1",
     "node-int64": "^0.4.0",
-    "thrift": "^0.10.0",
-    "underscore": "^1.8.3"
+    "thrift": "^0.12.0",
+    "underscore": "^1.9.1"
   },
   "devDependencies": {
-    "should": "^13.2.0",
-    "mocha": "^4.0.1"
+    "should": "^13.2.3",
+    "mocha": "^6.0.2"
   },
   "scripts": {
     "test": "mocha"
@@ -25,6 +25,11 @@
     "url": "http://github.com/exposebox/node-thrift2-hbase"
   },
   "author": "orel@exposebox.com",
+  "contributors": [
+    "orel@exposebox.com",
+    "ran@exposebox.com",
+    "eran@exposebox.com"
+  ],
   "license": "ISC",
   "keywords": [
     "hbase",
