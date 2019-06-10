@@ -4,7 +4,7 @@
   "description": "Easy to CRUD for hbase by node-thrift-hbase",
   "main": "src/service.js",
   "dependencies": {
-    "bluebird": "^3.5.3",
+    "bluebird": "^3.5.5",
     "caching-map": "git+https://github.com/exposebox/caching-map.git",
     "debug": "^4.1.1",
     "generic-pool": "^2.5.4",
