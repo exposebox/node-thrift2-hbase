@@ -13,12 +13,12 @@ class ScanStream extends Readable {
     }
 
     async startScan() {
-        return new Promise((resolve, reject) => {
-            this.hbaseClientPool.acquire((err, hbaseClient) => {
-                if (err) {
-                    this.emit('error', err);
+        if (this._scannerClosed) return;
 
-                    return resolve();
+        return new Promise((resolve, reject) => {
+            this.hbaseClientPool.acquire((aquireError, hbaseClient) => {
+                if (aquireError) {
+                    return this.closeScanner(aquireError, resolve);
                 }
 
                 const hbaseThriftClient = hbaseClient.client;
@@ -26,24 +26,36 @@ class ScanStream extends Readable {
                 this.hbaseClient = hbaseClient;
                 this.hbaseThriftClient = hbaseThriftClient;
 
+                if (this._scannerClosed) {
+                    return this.closeScanner(undefined, resolve);
+                }
+
                 hbaseThriftClient.openScanner(this.table, this.tScan, (openScannerError, scannerId) => {
-                    this.scannerId = scannerId;
-
                     if (openScannerError) {
-                        this.closeScanner(openScannerError, resolve);
-
-                        return;
+                        return this.closeScanner(openScannerError, resolve);
                     }
 
-                    return resolve();
+                    this.scannerId = scannerId;
+
+                    if (this._scannerClosed) {
+                        return this.closeScanner(undefined, resolve);
+                    }
+
+                    resolve();
                 });
             });
         });
     }
 
     async _read() {
+        if (this._scannerClosed) return;
+
         if (!this._readStarted) {
             await this.startScan();
+
+            if (this._scannerClosed) {
+                return this.closeScanner(undefined);
+            }
 
             this._readStarted = true;
         }
@@ -52,9 +64,7 @@ class ScanStream extends Readable {
             .getScannerRows(this.scannerId, this.scan.chunkSize, (scanError, data) => {
                 //  error
                 if (scanError) {
-                    this.closeScanner(scanError);
-
-                    return;
+                    return this.closeScanner(scanError);
                 }
 
                 //  end of data
@@ -66,31 +76,43 @@ class ScanStream extends Readable {
                     return;
                 }
 
-                // splits cpu blocks, takes less uninterrupted cpu time
-                this.pause();
-                setImmediate(() => this.resume());
-
                 //  incoming data
                 this.push(this.scan.objectsFromData(data));
             });
     }
 
-    closeScanner(closeByError, scannerClosedCallback) {
-        this.hbaseThriftClient
-            .closeScanner(this.scannerId, err => {
-                if (err) {
-                    console.error(err);
-                }
+    async closeScanner(closeByError, scannerClosedCallback) {
+        this._scannerClosed = true;
 
+        if (this.scannerId !== undefined) {
+            try {
+                await new Promise((resolve, reject) =>
+                    this.hbaseThriftClient.closeScanner(this.scannerId, err => !err ? resolve() : reject(err)));
+
+                this.scannerId = undefined;
+            } catch (err) {
+                this.emit('error', err);
+            }
+        }
+
+        if (this.hbaseClient !== undefined) {
+            try {
                 this.hbaseClientPool.release(this.hbaseClient);
 
-                if (scannerClosedCallback !== undefined) {
-                    scannerClosedCallback();
-                }
-            });
+                this.hbaseClient = undefined;
+            } catch (err) {
+                this.emit('error', err);
+            }
+        }
 
         if (closeByError !== undefined) {
-            this.emit('error', closeByError.message.slice(0, 120));
+            this.emit('error', closeByError);
+        }
+
+        try {
+            scannerClosedCallback && scannerClosedCallback();
+        } catch (err) {
+            this.emit('error', err);
         }
     }
 }
