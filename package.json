@@ -14,8 +14,8 @@
     "underscore": "^1.9.1"
   },
   "devDependencies": {
-    "should": "^13.2.3",
-    "mocha": "^6.0.2"
+    "mocha": "^6.1.4",
+    "should": "^13.2.3"
   },
   "scripts": {
     "test": "mocha"
