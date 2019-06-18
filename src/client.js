@@ -118,17 +118,22 @@ const createClientPool = function (options) {
                 //todo: 1. Need to retry with different host. 2. Add cool time for host with errors.
                 client.connection.on('error', function (err) {
                     debug('Thrift connection error', err, client.host);
+                    client.releaseCommandCallbacksOnError(err);
                     callbackWrapper(err, client);
                 });
 
                 client.connection.on('close', function () {
                     debug('Thrift close connection error', client.host);
-                    callbackWrapper(new Error('Thrift close connection'), client);
+                    let error = new Error('Thrift close connection');
+                    client.releaseCommandCallbacksOnError(error);
+                    callbackWrapper(error, client);
                 });
 
                 client.connection.on('timeout', function () {
                     debug('Thrift timeout connection error', client.host);
-                    callbackWrapper(new Error('Thrift timeout connection'), client);
+                    const error = new Error('Thrift timeout connection');
+                    client.releaseCommandCallbacksOnError(error);
+                    callbackWrapper(error, client);
                 });
 
             },
@@ -162,10 +167,21 @@ const Client = function (options) {
     this.port = options.port || '9090';
 
     options.connect_timeout = options.timeout || 0;
+    options.max_attempts = options.maxAttempts;
+    options.retry_max_delay = options.retryMaxDelay;
 
     const connection = thrift.createConnection(this.host, this.port, options);
     connection.connection.setKeepAlive(true);
     this.connection = connection;
+
+    this.commandCallbacks = new Set();
+};
+
+Client.prototype.releaseCommandCallbacksOnError = function (err) {
+    for (const callback of this.commandCallbacks) {
+        callback(err);
+    }
+    this.commandCallbacks.clear();
 };
 
 Client.create = function (options) {
@@ -187,7 +203,12 @@ Client.prototype.Inc = function (row) {
 Client.prototype.scan = function (table, scan, callback) {
     const tScan = new HBaseTypes.TScan(scan);
 
-    this.client.getScannerResults(table, tScan, scan.numRows, function (serr, data) {
+    this.commandCallbacks.add(callback);
+
+    this.client.getScannerResults(table, tScan, scan.numRows, (serr, data) => {
+
+        this.commandCallbacks.delete(callback);
+
         if (serr) {
             callback(serr.message.slice(0, 120));
         } else {
@@ -198,7 +219,12 @@ Client.prototype.scan = function (table, scan, callback) {
 
 Client.prototype.get = function (table, getObj, callback) {
     const tGet = new HBaseTypes.TGet(getObj);
-    this.client.get(table, tGet, function (err, data) {
+
+    this.commandCallbacks.add(callback);
+
+    this.client.get(table, tGet, (err, data) => {
+
+        this.commandCallbacks.delete(callback);
 
         if (err) {
             callback(err.message.slice(0, 120));
@@ -227,7 +253,11 @@ Client.prototype.put = function (table, param, callback) {
 
     const tPut = new HBaseTypes.TPut(query);
 
-    this.client.put(table, tPut, function (err) {
+    this.commandCallbacks.add(callback);
+
+    this.client.put(table, tPut, (err) => {
+
+        this.commandCallbacks.delete(callback);
 
         if (err) {
             callback(err);
@@ -283,7 +313,11 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
 
     const tPut = new HBaseTypes.TPut(query);
 
-    this.client.put(table, tPut, function (err) {
+    this.commandCallbacks.add(callback);
+
+    this.client.put(table, tPut, (err) => {
+
+        this.commandCallbacks.delete(callback);
 
         if (err) {
             callback(err);
@@ -295,7 +329,12 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
 
 Client.prototype.del = function (table, param, callback) {
     const tDelete = new HBaseTypes.TDelete(param);
-    this.client.deleteSingle(table, tDelete, function (err) {
+
+    this.commandCallbacks.add(callback);
+
+    this.client.deleteSingle(table, tDelete, (err) => {
+
+        this.commandCallbacks.delete(callback);
 
         if (err) {
             callback(err);
@@ -357,7 +396,12 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
 
     const tDelete = new HBaseTypes.TDelete(query);
 
-    this.client.deleteSingle(table, tDelete, function (err, data) {
+    this.commandCallbacks.add(callback);
+
+    this.client.deleteSingle(table, tDelete, (err, data) => {
+
+        this.commandCallbacks.delete(callback);
+
         if (err) {
             callback(err);
         } else {
@@ -385,7 +429,11 @@ Client.prototype.inc = function (table, param, callback) {
 
     const tIncrement = new HBaseTypes.TIncrement(query);
 
-    this.client.increment(table, tIncrement, function (err, data) {
+    this.commandCallbacks.add(callback);
+
+    this.client.increment(table, tIncrement, (err, data) => {
+
+        this.commandCallbacks.delete(callback);
 
         if (err) {
             callback(err);
@@ -437,7 +485,12 @@ Client.prototype.incRow = function (table, row, columns, callback) {
 
     const tIncrement = new HBaseTypes.TIncrement(query);
 
-    this.client.increment(table, tIncrement, function (err, data) {
+    this.commandCallbacks.add(callback);
+
+    this.client.increment(table, tIncrement, (err, data) => {
+
+        this.commandCallbacks.delete(callback);
+
         if (err) {
             callback(err);
         } else {
