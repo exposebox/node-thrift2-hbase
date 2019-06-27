@@ -134,7 +134,7 @@ const createClientPool = function (options) {
 
             },
             validate: function (client) {
-                return !client._invalid;
+                return !client._invalid && client.connection && client.connection.connected;
             },
             destroy: function (client) {
                 client.connection.end();
