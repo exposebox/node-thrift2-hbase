@@ -40,7 +40,6 @@ const createClientPool = function (options) {
             options.protocol = thrift.TBinaryProtocol;
     }
 
-
     options.hosts.forEach(function (host) {
         const hostHistory = {
             host: host,
@@ -85,11 +84,9 @@ const createClientPool = function (options) {
                     callback(error, client);
                 }
 
-
                 if (!options.hosts || options.hosts.length < 1) {
                     return callback(new Error('hosts is empty'));
                 }
-
 
                 //filter hostsHistory with connect error.
                 const hostsToSelect = _.values(hostsHistory).filter(function (hostHistory) {
@@ -108,7 +105,6 @@ const createClientPool = function (options) {
                     host
                 });
                 const client = new Client(clientOption);
-
 
                 client.connection.on('connect', function () {
                     client.client = thrift.createClient(HBase, client.connection);
@@ -293,7 +289,6 @@ Client.prototype.putRow = function (table, row, columns, value, timestamp, callb
         }
     }
 
-
     query.row = row;
     const qcolumns = [];
     if (columns) {
@@ -370,7 +365,6 @@ Client.prototype.delRow = function (table, row, columns, timestamp, callback) {
         }
     }
 
-
     query.row = row;
     const qcolumns = [];
     if (args.length >= 4 && columns) {
@@ -425,7 +419,6 @@ Client.prototype.inc = function (table, param, callback) {
         });
         query.columns = qcolumns;
     }
-
 
     const tIncrement = new HBaseTypes.TIncrement(query);
 
