@@ -1,51 +1,45 @@
 "use strict";
 
+const Mutate = require('./mutate');
 
-function Del(row) {
-    if (!(this instanceof Del)) {
-        return new Del(row);
+class Del extends Mutate {
+
+    add(family, qualifier, timestamp) {
+        var familyMap = {};
+        familyMap.family = family;
+        if (qualifier) {
+            familyMap.qualifier = qualifier;
+        }
+        if (timestamp) {
+            familyMap.timestamp = timestamp;
+        }
+        this.columns.push(familyMap);
+        return this;
     }
-    this.row = row;
-    this.columns = [];
-}
 
-Del.prototype.add = function (family, qualifier, timestamp) {
-    var familyMap = {};
-    familyMap.family = family;
-    if(qualifier){
+    addFamily(family) {
+        var familyMap = {};
+        familyMap.family = family;
+        this.columns.push(familyMap);
+        return this;
+    }
+
+    addColumn(family, qualifier) {
+        var familyMap = {};
+        familyMap.family = family;
         familyMap.qualifier = qualifier;
+        this.columns.push(familyMap);
+        return this;
     }
-    if(timestamp){
+
+    addTimestamp(family, qualifier, timestamp) {
+        var familyMap = {};
+        familyMap.family = family;
+        familyMap.qualifier = qualifier;
         familyMap.timestamp = timestamp;
+        this.columns.push(familyMap);
+        return this;
     }
-    this.columns.push(familyMap);
-    return this;
-};
-
-Del.prototype.addFamily = function (family) {
-    var familyMap = {};
-    familyMap.family = family;
-    this.columns.push(familyMap);
-    return this;
-};
-
-Del.prototype.addColumn = function (family, qualifier) {
-    var familyMap = {};
-    familyMap.family = family;
-    familyMap.qualifier = qualifier;
-    this.columns.push(familyMap);
-    return this;
-};
-
-Del.prototype.addTimestamp = function (family, qualifier, timestamp) {
-    var familyMap = {};
-    familyMap.family = family;
-    familyMap.qualifier = qualifier;
-    familyMap.timestamp = timestamp;
-    this.columns.push(familyMap);
-    return this;
-};
-
-
+}
 
 module.exports = Del;

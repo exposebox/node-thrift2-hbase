@@ -21,7 +21,7 @@ class ScanStream extends Readable {
                     return this.closeScanner(aquireError, resolve);
                 }
 
-                const hbaseThriftClient = hbaseClient.client;
+                const hbaseThriftClient = hbaseClient.thriftClient;
 
                 this.hbaseClient = hbaseClient;
                 this.hbaseThriftClient = hbaseThriftClient;

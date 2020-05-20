@@ -17,7 +17,7 @@ const testScanOptions = {
 };
 
 describe('SCAN operation', function () {
-    this.timeout(10000);
+    this.timeout(60000);
 
     before(async function () {
         this.hbaseClient = hbaseServiceCreate(config.hbase);
@@ -45,6 +45,23 @@ describe('SCAN operation', function () {
         });
 
         should.equal(rows.length, 300);
+    });
+
+    it('should get last 10 rows', async function () {
+        const firstRows = await scanRows({
+            chunkSize: 10,
+            numRows: 10
+        });
+
+        const latRows = await scanRows({
+            chunkSize: 10,
+            numRows: 10,
+            reversed: true
+        });
+
+        should.equal(latRows.length, 10);
+        should.equal(firstRows.length, 10);
+        should.notEqual(latRows, firstRows, "Last 10 rows should be different from first 10 rows")
     });
 
     it('should get all rows - 200 rows per iteration', function (done) {

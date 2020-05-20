@@ -1,13 +1,21 @@
 "use strict";
 
+const HBaseTypes = require('../gen-nodejs/hbase_types');
+
 const Int64 = require('node-int64');
 
 const serde = require('./serde');
 
-class Put {
-    constructor(row) {
-        this.row = row;
-        this.columns = [];
+const Mutate = require('./mutate');
+
+class Put extends Mutate {
+
+    static getThriftType() {
+        return HBaseTypes.TPut;
+    }
+
+    static getThriftColumnType() {
+        return HBaseTypes.TColumnValue;
     }
 
     add(family, qualifier, value, timestamp) {
@@ -30,16 +38,15 @@ class Put {
             if (value !== undefined && value !== null) {
                 if (Array.isArray(value)) {
                     this.add(family, prop, {type: 'json', value}, timestamp);
-                }
-                else if (typeof value === 'object') {
+                } else if (typeof value === 'object') {
                     this.addObject(family, value, timestamp);
-                }
-                else {
+                } else {
                     this.add(family, prop, value, timestamp);
                 }
             }
         }
     }
+
 }
 
 

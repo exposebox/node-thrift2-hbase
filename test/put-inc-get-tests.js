@@ -32,7 +32,7 @@ describe('PUT operation', function () {
 
     const now = Date.now();
 
-    _.each(putValues, function (expectedValue, valueType) {
+    for (let [valueType, expectedValue] of Object.entries(putValues)) {
         const testTitle = `should put a ${valueType.toString()} value (${expectedValue})`;
 
         it(testTitle, async function () {
@@ -62,5 +62,54 @@ describe('PUT operation', function () {
                 should.equal(actualValue, expectedValue);
             }
         });
+    }
+});
+
+describe('Inc operation', function () {
+    this.timeout(10000);
+
+    before(function () {
+        this.hbaseClient = hbaseServiceCreate(config.hbase);
     });
+
+    after(function () {
+        this.hbaseClient.destroy();
+    });
+
+    const now = Date.now();
+
+    const incValues = [undefined, 3, -2];
+
+    let sum = 0;
+
+    for (const incVal of incValues) {
+
+        it(`inc a row with amount ${incVal}`, async function () {
+            const hbaseClient = this.hbaseClient;
+
+            const rowKey = `inc.${now}`;
+
+            const incObject = new hbaseClient.Inc(rowKey);
+
+            incObject.add('f', 'counter', incVal);
+
+            console.log('Incrementing row...', testTable, incObject);
+
+            await hbaseClient.incAsync(testTable, incObject);
+
+            const getObject = new hbaseClient.Get(rowKey);
+            getObject.add('f', {name: "counter", type: "number"});
+
+            console.log('Getting row...', getObject);
+
+            const rowData = await hbaseClient.getAsync(testTable, getObject, {});
+
+            let actualValue = rowData && rowData.f && rowData.f.counter;
+
+            sum += incVal || 1;
+
+            should.equal(actualValue, sum);
+
+        });
+    }
 });

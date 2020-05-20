@@ -197,8 +197,8 @@ struct TIncrement {
   6: optional TCellVisibility cellVisibility
 }
 
-/* 
- * Used to perform append operation 
+/*
+ * Used to perform append operation
  */
 struct TAppend {
   1: required binary row,
@@ -223,14 +223,15 @@ struct TScan {
   8: optional i32 batchSize,
   9: optional map<binary, binary> attributes
   10: optional TAuthorization authorizations
+  11: optional bool reversed
 }
 
 /**
  * Atomic mutation for the specified row. It can be either Put or Delete.
  */
 union TMutation {
-  1: optional TPut put,
-  2: optional TDelete deleteSingle,
+  1: TPut put,
+  2: TDelete deleteSingle,
 }
 
 /**
@@ -274,7 +275,7 @@ service THBaseService {
     1: required binary table,
 
     /** the TGet to check for */
-    2: required TGet get
+    2: required TGet tget
   ) throws (1:TIOError io)
 
   /**
@@ -290,7 +291,7 @@ service THBaseService {
     1: required binary table,
 
     /** the TGet to fetch */
-    2: required TGet get
+    2: required TGet tget
   ) throws (1: TIOError io)
 
   /**
@@ -309,7 +310,7 @@ service THBaseService {
     /** a list of TGets to fetch, the Result list
         will have the Results at corresponding positions
         or null if there was an error */
-    2: required list<TGet> gets
+    2: required list<TGet> tgets
   ) throws (1: TIOError io)
 
   /**
@@ -320,7 +321,7 @@ service THBaseService {
     1: required binary table,
 
     /** the TPut to put */
-    2: required TPut put
+    2: required TPut tput
   ) throws (1: TIOError io)
 
   /**
@@ -348,7 +349,7 @@ service THBaseService {
     5: binary value,
 
     /** the TPut to put if the check succeeds */
-    6: required TPut put
+    6: required TPut tput
   ) throws (1: TIOError io)
 
   /**
@@ -359,7 +360,7 @@ service THBaseService {
     1: required binary table,
 
     /** a list of TPuts to commit */
-    2: required list<TPut> puts
+    2: required list<TPut> tputs
   ) throws (1: TIOError io)
 
   /**
@@ -373,7 +374,7 @@ service THBaseService {
     1: required binary table,
 
     /** the TDelete to delete */
-    2: required TDelete deleteSingle
+    2: required TDelete tdelete
   ) throws (1: TIOError io)
 
   /**
@@ -388,7 +389,7 @@ service THBaseService {
     1: required binary table,
 
     /** list of TDeletes to delete */
-    2: required list<TDelete> deletes
+    2: required list<TDelete> tdeletes
   ) throws (1: TIOError io)
 
   /**
@@ -416,7 +417,7 @@ service THBaseService {
     5: binary value,
 
     /** the TDelete to execute if the check succeeds */
-    6: required TDelete deleteSingle
+    6: required TDelete tdelete
   ) throws (1: TIOError io)
 
   TResult increment(
@@ -424,7 +425,7 @@ service THBaseService {
     1: required binary table,
 
     /** the TIncrement to increment */
-    2: required TIncrement increment
+    2: required TIncrement tincrement
   ) throws (1: TIOError io)
 
   TResult append(
@@ -432,7 +433,7 @@ service THBaseService {
     1: required binary table,
 
     /** the TAppend to append */
-    2: required TAppend append
+    2: required TAppend tappend
   ) throws (1: TIOError io)
 
   /**
@@ -445,7 +446,7 @@ service THBaseService {
     1: required binary table,
 
     /** the scan object to get a Scanner for */
-    2: required TScan scan,
+    2: required TScan tscan,
   ) throws (1: TIOError io)
 
   /**
@@ -489,7 +490,7 @@ service THBaseService {
     1: required binary table,
 
     /** mutations to apply */
-    2: required TRowMutations rowMutations
+    2: required TRowMutations trowMutations
   ) throws (1: TIOError io)
 
   /**
@@ -503,7 +504,7 @@ service THBaseService {
     1: required binary table,
 
     /** the scan object to get a Scanner for */
-    2: required TScan scan,
+    2: required TScan tscan,
 
     /** number of rows to return */
     3: i32 numRows = 1

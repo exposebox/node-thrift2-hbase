@@ -3,7 +3,7 @@
 const _ = require('underscore');
 const Promise = require('bluebird');
 
-const createClientPool = require('./client');
+const createClientPool = require('./client-pool');
 const Cache = require('./cache');
 const serde = require('./serde');
 
