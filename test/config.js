@@ -8,6 +8,6 @@ module.exports = {
         minConnections: 0,
         maxConnections: 20,
         idleTimeoutMillis: 5 * 60 * 1000,
-        timeout: 5000
+        timeout: 60000
     }
 };

@@ -13,7 +13,6 @@ class Scan {
         return {
             startRow: undefined,
             stopRow: undefined,
-            numRows: 10,
             maxVersions: 1,
             filterString: undefined,
             columns: [],

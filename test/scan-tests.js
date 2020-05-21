@@ -66,19 +66,28 @@ describe('SCAN operation', function () {
 
     it('should get all rows - 200 rows per iteration', function (done) {
         const chunkSize = 200;
+        const limit = 1500;
+        let numberOfRows = 0;
 
         createScanStream({
-            numRows: generatedRowsCount,
+            numRows: limit,
             chunkSize: chunkSize
         })
             .on('data', rows => {
                 console.log(`Received ${rows && rows.length} rows...`);
 
+                numberOfRows += rows.length;
+
                 rows.should.not.be.empty();
                 (rows.length).should.be.belowOrEqual(chunkSize);
             })
             .on('error', err => done(err))
-            .on('end', () => done(null));
+            .on('end', () => {
+
+                numberOfRows.should.be.equal(limit);
+
+                done(null);
+            });
     });
 
     it('should get range of rows - 50 rows per iteration', function (done) {

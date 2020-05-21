@@ -10,6 +10,8 @@ class ScanStream extends Readable {
         const tScan = new HBaseTypes.TScan(scan);
 
         Object.assign(this, {hbaseClientPool, table, scan, tScan});
+
+        this.numberOfRowsRead = 0;
     }
 
     async startScan() {
@@ -47,6 +49,14 @@ class ScanStream extends Readable {
         });
     }
 
+    calcNextBatchSize() {
+        if (this.scan.numRows > 0) {
+            return Math.min(this.scan.chunkSize, this.scan.numRows - this.numberOfRowsRead);
+        } else {
+            return this.scan.chunkSize;
+        }
+    }
+
     async _read() {
         if (this._scannerClosed) return;
 
@@ -61,23 +71,28 @@ class ScanStream extends Readable {
         }
 
         this.hbaseThriftClient
-            .getScannerRows(this.scannerId, this.scan.chunkSize, (scanError, data) => {
+            .getScannerRows(this.scannerId, this.calcNextBatchSize(), (scanError, data) => {
                 //  error
                 if (scanError) {
                     return this.closeScanner(scanError);
                 }
 
-                //  end of data
-                if (data.length === 0) {
+                this.numberOfRowsRead += data.length;
+
+                //  incoming data
+                if (data.length > 0) {
+                    this.push(this.scan.objectsFromData(data))
+                }
+                //  end of data or reached the limit
+                if (data.length === 0 ||
+                    this.scan.numRows > 0 && this.numberOfRowsRead >= this.scan.numRows) {
+
                     this.closeScanner();
 
                     this.push(null);
 
                     return;
                 }
-
-                //  incoming data
-                this.push(this.scan.objectsFromData(data));
             });
     }
 
